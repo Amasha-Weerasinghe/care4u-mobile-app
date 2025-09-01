@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Care4U",
+    "slug": "care4u-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#1875C3"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1875C3"
+      }
+    },
+    "sdkVersion": "53.0.0"
+  }
+}

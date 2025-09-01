@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Native certificates
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro bundler
+.metro-health-check*
+
+# Debug logs
+npm-debug.*
+
+# TypeScript
+*.tsbuildinfo
+
+# Bundle artifacts
+*.jsbundle
+
+# IDE
+.vscode/
+.idea/
