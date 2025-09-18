@@ -1,5 +1,11 @@
-import express from 'express';
 import dotenv from 'dotenv';
+import path from 'path';
+
+// Configure environment variables first, before other imports
+const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env';
+dotenv.config({ path: path.join(__dirname, '../', envFile) });
+
+import express from 'express';
 import { initializeDatabase } from './database/init';
 import { testConnection } from './config/database';
 import authRoutes from './routes/auth';
@@ -8,9 +14,6 @@ import sugarRoutes from './routes/sugar';
 import exerciseRoutes from './routes/exercise';
 import appointmentRoutes from './routes/appointments';
 import mealRecommendationRoutes from './routes/mealRecommendations';
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -75,6 +78,20 @@ app.use('*', (req, res) => {
 // Initialize database and start server
 const startServer = async () => {
   try {
+    // Show database connection info
+    const dbUrl = process.env.DATABASE_URL;
+    if (dbUrl) {
+      try {
+        const url = new URL(dbUrl);
+        const maskedUrl = `${url.protocol}//${url.username}:***@${url.hostname}${url.port ? ':' + url.port : ''}${url.pathname}`;
+        console.log('Database:', maskedUrl);
+      } catch (e) {
+        console.log('Database: Invalid URL format');
+      }
+    } else {
+      console.log('Database: Not configured');
+    }
+    
     // Test database connection
     const dbConnected = await testConnection();
     if (!dbConnected) {
