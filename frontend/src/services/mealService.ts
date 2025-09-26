@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_ENDPOINTS, STORAGE_KEYS } from '../constants/config';
+import { formatDateToAPI } from '../utils/timeUtils';
 import {
   GetFoodItemsResponse,
   GetFoodCategoriesResponse,
@@ -160,7 +161,11 @@ class MealService {
 
   // Today's Summary API
   async getTodaySummary(): Promise<GetTodaySummaryResponse> {
-    const response = await this.api.get(API_ENDPOINTS.TODAY_SUMMARY);
+    // Get today's date in YYYY-MM-DD format using local timezone
+    const today = formatDateToAPI(new Date());
+    console.log(`[MealService] getTodaySummary - requesting date: ${today}`);
+    const response = await this.api.get(`${API_ENDPOINTS.TODAY_SUMMARY}?date=${today}`);
+    console.log(`[MealService] getTodaySummary - response:`, response.data);
     return response.data;
   }
 

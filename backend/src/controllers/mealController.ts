@@ -466,14 +466,15 @@ export class MealController {
   static async getTodaySummary(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user!.userId;
-      const summary = await MealService.getTodaySummary(userId);
-
-      const todayString = getCurrentDate();
+      
+      // Use date from query parameter if provided, otherwise use current date
+      const requestedDate = req.query.date as string || getCurrentDate();
+      const summary = await MealService.getTodaySummary(userId, requestedDate);
 
       res.json({
         success: true,
         summary,
-        date: todayString
+        date: requestedDate
       });
     } catch (error) {
       console.error('Get today summary error:', error);

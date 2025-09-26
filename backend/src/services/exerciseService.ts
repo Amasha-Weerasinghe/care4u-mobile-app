@@ -1,6 +1,6 @@
 import { ExerciseModel } from '../models/exerciseModel';
 import { CreateExerciseRequest, UpdateExerciseRequest, GetExerciseHistoryRequest, ExerciseActivity, ExerciseSummary } from '../types/exercise.types';
-import { isValidDate } from '../utils/timeUtils';
+import { isValidDate, getCurrentDate } from '../utils/timeUtils';
 
 export class ExerciseService {
   // Create new exercise activity
@@ -51,9 +51,18 @@ export class ExerciseService {
   }
 
   // Get today's exercise summary
-  static async getTodayExerciseSummary(userId: number): Promise<ExerciseSummary> {
+  static async getTodayExerciseSummary(userId: number, date?: string): Promise<ExerciseSummary> {
     try {
-      return await ExerciseModel.getTodayExerciseSummary(userId);
+      // Use provided date or get current date
+      const targetDate = date || getCurrentDate();
+      
+      console.log(`[ExerciseService] getTodayExerciseSummary - userId: ${userId}, targetDate: ${targetDate}`);
+
+      const summary = await ExerciseModel.getDailyExerciseSummary(userId, targetDate);
+      
+      console.log(`[ExerciseService] Found ${summary.activities.length} exercise activities for date ${targetDate}:`, summary.activities.map(a => ({ id: a.id, activity_type: a.activity_type, duration_seconds: a.duration_seconds })));
+
+      return summary;
     } catch (error) {
       console.error('ExerciseService - getTodayExerciseSummary error:', error);
       throw error;

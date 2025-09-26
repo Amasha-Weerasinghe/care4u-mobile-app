@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { AuthenticatedRequest } from '../types/auth.types';
 import { SugarService } from '../services/sugarService';
+import { getCurrentDate } from '../utils/timeUtils';
 
 export class SugarController {
   /**
@@ -128,7 +129,10 @@ export class SugarController {
   static async getTodaySugarSummary(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user!.userId;
-      const summary = await SugarService.getTodaySugarSummary(userId);
+      
+      // Use date from query parameter if provided, otherwise use current date
+      const requestedDate = req.query.date as string || getCurrentDate();
+      const summary = await SugarService.getTodaySugarSummary(userId, requestedDate);
 
       res.json({
         success: true,

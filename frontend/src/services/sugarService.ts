@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_ENDPOINTS, STORAGE_KEYS } from '../constants/config';
+import { formatDateToAPI } from '../utils/timeUtils';
 
 export interface SugarRecord {
   id: number;
@@ -102,7 +103,11 @@ class SugarService {
 
   // Get today's sugar summary
   async getTodaySugarSummary(): Promise<{ success: boolean; summary: SugarSummary }> {
-    const response = await this.api.get(API_ENDPOINTS.SUGAR_TODAY_SUMMARY);
+    // Get today's date in YYYY-MM-DD format using local timezone
+    const today = formatDateToAPI(new Date());
+    console.log(`[SugarService] getTodaySugarSummary - requesting date: ${today}`);
+    const response = await this.api.get(`${API_ENDPOINTS.SUGAR_TODAY_SUMMARY}?date=${today}`);
+    console.log(`[SugarService] getTodaySugarSummary - response:`, response.data);
     return response.data;
   }
 

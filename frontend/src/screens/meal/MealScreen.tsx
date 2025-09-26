@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Text, Card, Button, useTheme, ProgressBar } from 'react-native-paper';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -22,6 +22,11 @@ const MealScreen = () => {
       loadData();
     }, [])
   );
+
+  // Also load data on component mount
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const loadData = async () => {
     try {

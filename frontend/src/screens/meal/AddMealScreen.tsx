@@ -15,6 +15,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../constants/theme';
 import mealService from '../../services/mealService';
+import { formatDateToAPI, formatDateForDisplay } from '../../utils/timeUtils';
 import { FoodItem, MealItem, CalorieGoals } from '../../types';
 import PaperActivityIndicator from '../../components/PaperActivityIndicator';
 
@@ -24,19 +25,13 @@ const AddMealScreen = () => {
   
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
   const [mealDate, setMealDate] = useState(() => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    // Use local date formatting for consistency
+    return formatDateToAPI(new Date());
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState(() => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    // Use local date formatting for consistency
+    return formatDateToAPI(new Date());
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -203,12 +198,7 @@ const AddMealScreen = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
+    return formatDateForDisplay(date);
   };
 
   const addFoodItem = (foodItem: FoodItem) => {
@@ -746,11 +736,8 @@ const AddMealScreen = () => {
               const today = new Date();
               today.setHours(23, 59, 59, 999); // Set to end of today
               if (selectedDate <= today) {
-                // Use timezone-safe date formatting to avoid UTC conversion issues
-                const year = selectedDate.getFullYear();
-                const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-                const day = String(selectedDate.getDate()).padStart(2, '0');
-                const selectedDateString = `${year}-${month}-${day}`;
+                // Use local date formatting for consistency
+                const selectedDateString = formatDateToAPI(selectedDate);
                 
 
                 

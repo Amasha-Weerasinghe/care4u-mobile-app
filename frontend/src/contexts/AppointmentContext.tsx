@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Appointment } from '../types';
 import { appointmentService } from '../services/appointmentService';
+import authService from '../services/authService';
 
 interface AppointmentContextType {
   appointments: Appointment[];
@@ -40,6 +41,15 @@ export const AppointmentProvider: React.FC<AppointmentProviderProps> = ({ childr
     try {
       setLoading(true);
       setError(null);
+      
+      // Check if user is authenticated first
+      const token = await authService.getAuthToken();
+      if (!token) {
+        console.log('No auth token found, skipping appointment load');
+        setLoading(false);
+        return;
+      }
+      
       const response = await appointmentService.getAppointments();
       setAppointments(response.appointments);
     } catch (err) {

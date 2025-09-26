@@ -17,6 +17,7 @@ import { RootStackParamList } from '../../types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { formatDateToAPI, formatDateForDisplay } from '../../utils/timeUtils';
 
 const RecordActivityScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -74,18 +75,13 @@ const RecordActivityScreen: React.FC = () => {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    return formatDateForDisplay(date);
   };
 
   const handleActivitySelect = (activity: typeof activities[0]) => {
     navigation.navigate('TrackActivity', { 
       activity,
-      selectedDate: selectedDate.toISOString().split('T')[0] 
+      selectedDate: formatDateToAPI(selectedDate)
     });
   };
 

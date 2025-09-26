@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Modal, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, Modal, RefreshControl, Alert } from 'react-native';
 import { 
   Text, 
   Button, 
@@ -14,6 +14,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { COLORS } from '../../constants/theme';
 import mealService from '../../services/mealService';
+import { formatDateToAPI, formatDateForDisplay } from '../../utils/timeUtils';
 import { MealRecord, CalorieGoals } from '../../types';
 import PaperActivityIndicator from '../../components/PaperActivityIndicator';
 
@@ -21,12 +22,7 @@ const MealHistoryScreen = () => {
   const navigation = useNavigation();
   
   const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const dateString = `${year}-${month}-${day}`;
-    return dateString;
+    return formatDateToAPI(new Date());
   });
   const [selectedMealType, setSelectedMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -161,13 +157,10 @@ const MealHistoryScreen = () => {
 
   const handleDateConfirm = () => {
     const today = new Date();
-        today.setHours(23, 59, 59, 999);
+    today.setHours(23, 59, 59, 999);
 
-    // Use timezone-safe date formatting 
-    const todayYear = today.getFullYear();
-    const todayMonth = String(today.getMonth() + 1).padStart(2, '0');
-    const todayDay = String(today.getDate()).padStart(2, '0');
-    const todayString = `${todayYear}-${todayMonth}-${todayDay}`;
+    // Use consistent date formatting 
+    const todayString = formatDateToAPI(today);
     
     if (tempDate && tempDate <= todayString) {
       setSelectedDate(tempDate);

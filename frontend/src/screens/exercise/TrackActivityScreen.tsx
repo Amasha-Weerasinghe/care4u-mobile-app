@@ -15,6 +15,7 @@ import exerciseService from '../../services/exerciseService';
 import authService from '../../services/authService';
 import PaperActivityIndicator from '../../components/PaperActivityIndicator';
 import { COLORS } from '../../constants/theme';
+import { formatDateToAPI } from '../../utils/timeUtils';
 
 interface RouteParams {
   activity: {

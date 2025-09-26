@@ -22,6 +22,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList, MainTabParamList } from '../types';
 import { COLORS } from '../constants/theme';
+import { formatDateToAPI } from '../utils/timeUtils';
 import authService from '../services/authService';
 import mealService from '../services/mealService';
 import exerciseService from '../services/exerciseService';
@@ -69,6 +70,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const loadUpcomingAppointments = async () => {
     try {
       setAppointmentsLoading(true);
+      
+      // Check if user is authenticated first
+      const token = await authService.getAuthToken();
+      if (!token) {
+        console.log('No auth token found, skipping appointment load');
+        return;
+      }
+      
       const response = await appointmentService.getUpcomingAppointments(10);
       setUpcomingAppointments(response.appointments);
     } catch (error) {
@@ -335,7 +344,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   );
 
   const formatDateForComparison = (dateString: string): string => {
-    return new Date(dateString).toISOString().split('T')[0];
+    return formatDateToAPI(new Date(dateString));
   };
 
   // Initialize tip system and set up hourly updates
@@ -355,6 +364,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const loadHomeData = async () => {
     try {
       setLoading(true);
+      
+      // Check if user is authenticated first
+      const token = await authService.getAuthToken();
+      if (!token) {
+        console.log('No auth token found, skipping data load');
+        setLoading(false);
+        return;
+      }
+      
       const userResponse = await authService.getUser();
       if (userResponse.success) {
         setUser(userResponse.profile);

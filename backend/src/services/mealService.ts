@@ -294,7 +294,7 @@ export class MealService {
   }
 
   // Get today's meal summary for a user
-  static async getTodaySummary(userId: number): Promise<{
+  static async getTodaySummary(userId: number, date?: string): Promise<{
     totalCalories: number;
     totalMeals: number;
     calorieGoal: number;
@@ -311,11 +311,15 @@ export class MealService {
     const calorieGoals = await MealModel.getCalorieGoals(userId);
     const calorieGoal = calorieGoals?.calorie_intake_goal || 2000;
 
-    // Get today's date in YYYY-MM-DD format
-    const todayString = getCurrentDate();
+    // Use provided date or get current date
+    const targetDate = date || getCurrentDate();
+    
+    console.log(`[MealService] getTodaySummary - userId: ${userId}, targetDate: ${targetDate}`);
 
-    // Get today's meal records
-    const todayMeals = await MealModel.getMealRecords(userId, todayString);
+    // Get meal records for the specified date
+    const todayMeals = await MealModel.getMealRecords(userId, targetDate);
+    
+    console.log(`[MealService] Found ${todayMeals.length} meals for date ${targetDate}:`, todayMeals.map(m => ({ id: m.id, meal_type: m.meal_type, total_calories: m.total_calories })));
 
     // Calculate totals
     const totalCalories = todayMeals.reduce((sum, meal) => sum + meal.total_calories, 0);

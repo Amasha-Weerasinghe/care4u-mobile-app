@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { ExerciseService } from '../services/exerciseService';
 import { CreateExerciseRequest, UpdateExerciseRequest, GetExerciseHistoryRequest } from '../types/exercise.types';
 import { AuthenticatedRequest } from '../types/auth.types';
+import { getCurrentDate } from '../utils/timeUtils';
 
 export class ExerciseController {
   /**
@@ -40,12 +41,15 @@ export class ExerciseController {
   static async getTodayExerciseSummary(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user!.userId;
-
-      const summary = await ExerciseService.getTodayExerciseSummary(userId);
+      
+      // Use date from query parameter if provided, otherwise use current date
+      const requestedDate = req.query.date as string || getCurrentDate();
+      const summary = await ExerciseService.getTodayExerciseSummary(userId, requestedDate);
 
       res.status(200).json({
         success: true,
-        summary
+        summary,
+        date: requestedDate
       });
     } catch (error) {
       console.error('ExerciseController - getTodayExerciseSummary error:', error);

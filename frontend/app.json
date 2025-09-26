@@ -22,7 +22,7 @@
       "package": "com.care4u.app",
       "versionCode": 1
     },
-    "sdkVersion": "50.0.0",
+    "sdkVersion": "54.0.0",
     "extra": {
       "eas": {
         "projectId": "d0cfebac-63e2-462e-82d4-1aa9c251f32f"

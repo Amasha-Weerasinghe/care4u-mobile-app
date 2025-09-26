@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = 'https://care4u-mobile-app.onrender.com';
+export const API_BASE_URL = 'https://expert-urgently-lion.ngrok-free.app';
 
 // API Endpoints
 export const API_ENDPOINTS = {

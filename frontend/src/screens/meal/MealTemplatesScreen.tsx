@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, Button, IconButton, Card, Chip, SegmentedButtons } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../constants/theme';
 import mealService from '../../services/mealService';
+import { formatDateToAPI, formatDateForDisplay } from '../../utils/timeUtils';
 import { MealTemplate } from '../../types';
 
 const MealTemplatesScreen = () => {
@@ -54,10 +55,8 @@ const MealTemplatesScreen = () => {
 
   const handleDateConfirm = async (selectedDate: Date) => {
     if (!selectedTemplate) return;
-    const year = selectedDate.getFullYear();
-    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(selectedDate.getDate()).padStart(2, '0');
-    const selectedDateString = `${year}-${month}-${day}`;
+    // Use local date formatting for consistency
+    const selectedDateString = formatDateToAPI(selectedDate);
     
     setMealDate(selectedDateString);
     setShowDatePicker(false);

@@ -20,7 +20,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import exerciseService, { ExerciseActivity, ExerciseSummary } from '../../services/exerciseService';
 import PaperActivityIndicator from '../../components/PaperActivityIndicator';
 import { COLORS } from '../../constants/theme';
-import { formatDuration } from '../../utils/timeUtils';
+import { formatDuration, formatDateToAPI, formatDateForDisplay } from '../../utils/timeUtils';
 
 const ActivityHistoryScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -39,11 +39,8 @@ const ActivityHistoryScreen: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // Get today's date in YYYY-MM-DD format 
-      const year = selectedDate.getFullYear();
-      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-      const day = String(selectedDate.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
+      // Get today's date in YYYY-MM-DD format using local timezone
+      const dateString = formatDateToAPI(selectedDate);
 
       const [historyResponse, summaryResponse] = await Promise.all([
         exerciseService.getExerciseHistory({
@@ -144,11 +141,8 @@ const ActivityHistoryScreen: React.FC = () => {
   const handleClearAllActivities = async () => {
     setClearingAll(true);
     try {
-      // Get today's date in YYYY-MM-DD format 
-      const year = selectedDate.getFullYear();
-      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-      const day = String(selectedDate.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
+      // Get today's date in YYYY-MM-DD format using local timezone
+      const dateString = formatDateToAPI(selectedDate);
 
       const response = await exerciseService.deleteExerciseActivitiesByDateAndType(
         dateString,

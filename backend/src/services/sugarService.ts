@@ -113,20 +113,24 @@ export class SugarService {
   }
 
   // Get today's sugar summary
-  static async getTodaySugarSummary(userId: number): Promise<{
+  static async getTodaySugarSummary(userId: number, date?: string): Promise<{
     totalRecords: number;
     averageBloodSugar: number;
     records: SugarRecord[];
     date: string;
   }> {
-    // Get today's date in YYYY-MM-DD format
-    const todayString = getCurrentDate();
+    // Use provided date or get current date
+    const targetDate = date || getCurrentDate();
+    
+    console.log(`[SugarService] getTodaySugarSummary - userId: ${userId}, targetDate: ${targetDate}`);
 
-    const summary = await SugarModel.getSugarSummary(userId, todayString);
+    const summary = await SugarModel.getSugarSummary(userId, targetDate);
+    
+    console.log(`[SugarService] Found ${summary.records.length} sugar records for date ${targetDate}:`, summary.records.map(r => ({ id: r.id, meal_type: r.meal_type, blood_sugar_value: r.blood_sugar_value })));
 
     return {
       ...summary,
-      date: todayString
+      date: targetDate
     };
   }
 }
