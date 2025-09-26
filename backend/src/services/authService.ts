@@ -1,22 +1,23 @@
 import jwt from 'jsonwebtoken';
 import { AuthModel } from '../models/authModel';
 import { sendOTPEmail } from '../config/email';
+import { OTP_EXPIRY_MS, JWT_ACCESS_TOKEN_EXPIRY, JWT_TEMP_TOKEN_EXPIRY } from '../config/app';
 import { User, OTPResult, ProfileResult } from '../types/auth.types';
 
 export class AuthService {
-  // Authentication 
+  // Authentication
   static async sendOTP(email: string): Promise<OTPResult> {
     try {
       // Check if user exists
       const user = await AuthModel.findUserByEmail(email);
-      
+
       if (!user) {
         // Create new user if doesn't exist
         const newUser = await AuthModel.createUser(email);
-        
+
         // Generate and send OTP
         const otp = this.generateOTP();
-        const otpExpiresAt = new Date(Date.now() + 1 * 60 * 1000); // 1 minute
+        const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
 
         await AuthModel.updateUserOTP(newUser.id, otp, otpExpiresAt);
         await sendOTPEmail(email, otp);
@@ -29,7 +30,7 @@ export class AuthService {
       } else {
         // User exists, generate new OTP
         const otp = this.generateOTP();
-        const otpExpiresAt = new Date(Date.now() + 1 * 60 * 1000); 
+        const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
 
         await AuthModel.updateUserOTP(user.id, otp, otpExpiresAt);
         await sendOTPEmail(email, otp);
@@ -70,23 +71,23 @@ export class AuthService {
 
       // Check if user has complete profile
       const profile = await AuthModel.getUserProfile(user.id);
-      const isProfileComplete = profile && 
-        profile.first_name && 
-        profile.last_name && 
-        profile.contact_number && 
-        profile.birth_date && 
-        profile.gender && 
-        profile.height && 
-        profile.weight && 
-        profile.emergency_contact_name && 
+      const isProfileComplete = profile &&
+        profile.first_name &&
+        profile.last_name &&
+        profile.contact_number &&
+        profile.birth_date &&
+        profile.gender &&
+        profile.height &&
+        profile.weight &&
+        profile.emergency_contact_name &&
         profile.emergency_contact_number;
 
       if (isProfileComplete) {
-        // Returning User with Complete Profile , create permanent JWT token
+        // Returning User with Complete Profile , create access JWT token
         const token = jwt.sign(
           { userId: user.id, email: user.email },
           process.env.JWT_SECRET!,
-          { expiresIn: '30d' }
+          { expiresIn: JWT_ACCESS_TOKEN_EXPIRY }
         );
 
         return {
@@ -108,7 +109,7 @@ export class AuthService {
         const tempToken = jwt.sign(
           { userId: user.id, email: user.email },
           process.env.JWT_SECRET!,
-          { expiresIn: '1h' }
+          { expiresIn: JWT_TEMP_TOKEN_EXPIRY }
         );
 
         return {
@@ -120,7 +121,7 @@ export class AuthService {
             email: user.email,
             isProfileComplete: false
           },
-          isNewUser: !profile, 
+          isNewUser: !profile,
           redirectTo: 'complete-profile'
         };
       }
@@ -145,7 +146,7 @@ export class AuthService {
 
       // Generate new OTP
       const otp = this.generateOTP();
-      const otpExpiresAt = new Date(Date.now() + 1 * 60 * 1000); 
+      const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
 
       await AuthModel.updateUserOTP(user.id, otp, otpExpiresAt);
       await sendOTPEmail(email, otp);
@@ -181,15 +182,15 @@ export class AuthService {
     try {
       // Check if profile is already complete
       const existingProfile = await AuthModel.getUserProfile(userId);
-      if (existingProfile && 
-          existingProfile.first_name && 
-          existingProfile.last_name && 
-          existingProfile.contact_number && 
-          existingProfile.birth_date && 
-          existingProfile.gender && 
-          existingProfile.height && 
-          existingProfile.weight && 
-          existingProfile.emergency_contact_name && 
+      if (existingProfile &&
+          existingProfile.first_name &&
+          existingProfile.last_name &&
+          existingProfile.contact_number &&
+          existingProfile.birth_date &&
+          existingProfile.gender &&
+          existingProfile.height &&
+          existingProfile.weight &&
+          existingProfile.emergency_contact_name &&
           existingProfile.emergency_contact_number) {
         return {
           success: false,
@@ -229,11 +230,11 @@ export class AuthService {
         calorie_burn_goal: profileData.calorie_burn_goal
       });
 
-      // Generate permanent JWT token after profile completion
+      // Generate access JWT token after profile completion
       const token = jwt.sign(
         { userId: userId, email: profile.email },
         process.env.JWT_SECRET!,
-        { expiresIn: '30d' }
+        { expiresIn: JWT_ACCESS_TOKEN_EXPIRY }
       );
 
       return {

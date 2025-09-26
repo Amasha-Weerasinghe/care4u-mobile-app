@@ -1,10 +1,10 @@
 import pool from '../config/database';
-import { 
-  FoodItem, 
-  CalorieGoals, 
-  MealTemplate, 
-  MealTemplateItem, 
-  MealRecord, 
+import {
+  FoodItem,
+  CalorieGoals,
+  MealTemplate,
+  MealTemplateItem,
+  MealRecord,
   MealRecordItem,
   CreateFoodItemRequest,
   CreateMealTemplateRequest,
@@ -40,8 +40,8 @@ export class MealModel {
 
   static async getFoodCategories(): Promise<string[]> {
     const result = await pool.query(
-      `SELECT DISTINCT category FROM food_items 
-       WHERE category IS NOT NULL 
+      `SELECT DISTINCT category FROM food_items
+       WHERE category IS NOT NULL
        AND category NOT IN ('breakfast', 'lunch', 'dinner', 'snack')
        ORDER BY category`
     );
@@ -94,10 +94,10 @@ export class MealModel {
     updated_by: number;
   }): Promise<FoodItem> {
     const result = await pool.query(
-      `UPDATE food_items SET 
-        name = $1, 
-        category = $2, 
-        calories_per_100g = $3, 
+      `UPDATE food_items SET
+        name = $1,
+        category = $2,
+        calories_per_100g = $3,
         is_veg = $4,
         updated_at = CURRENT_TIMESTAMP
         WHERE id = $5 RETURNING *`,
@@ -129,7 +129,7 @@ export class MealModel {
     calorie_burn_goal: number;
   }): Promise<CalorieGoals> {
     const result = await pool.query(
-      `UPDATE users SET 
+      `UPDATE users SET
         calorie_intake_goal = $1,
         calorie_burn_goal = $2,
         updated_at = CURRENT_TIMESTAMP
@@ -168,7 +168,7 @@ export class MealModel {
 
   static async getMealTemplates(userId: number, mealType?: string): Promise<MealTemplate[]> {
     let query = `
-      SELECT mt.*, 
+      SELECT mt.*,
              json_agg(
                json_build_object(
                  'id', mti.id,
@@ -225,9 +225,9 @@ export class MealModel {
     }
 
     const result = await pool.query(
-      `INSERT INTO meal_records (user_id, meal_type, total_calories, meal_date) 
-       VALUES ($1, $2, $3, $4::date) 
-       RETURNING id, user_id, meal_type, total_calories, 
+      `INSERT INTO meal_records (user_id, meal_type, total_calories, meal_date)
+       VALUES ($1, $2, $3, $4::date)
+       RETURNING id, user_id, meal_type, total_calories,
                 TO_CHAR(meal_date, 'YYYY-MM-DD') as meal_date,
                 created_at, updated_at`,
       [data.user_id, data.meal_type, data.total_calories, processedDate]
@@ -255,12 +255,12 @@ export class MealModel {
 
   static async getMealRecords(userId: number, mealDate?: string, mealType?: string): Promise<MealRecord[]> {
     let query = `
-      SELECT mr.id, mr.user_id, mr.meal_type, mr.total_calories, 
+      SELECT mr.id, mr.user_id, mr.meal_type, mr.total_calories,
              TO_CHAR(mr.meal_date, 'YYYY-MM-DD') as meal_date,
              mr.created_at, mr.updated_at,
              COALESCE(
                json_agg(
-                 CASE 
+                 CASE
                    WHEN mri.id IS NOT NULL THEN
                      json_build_object(
                        'id', mri.id,

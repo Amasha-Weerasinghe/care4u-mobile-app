@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, Alert } from 'react-native';
 import {
   Text,
   TextInput,
@@ -47,6 +47,7 @@ const AddMealScreen = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [totalCalories, setTotalCalories] = useState(0);
   const [calorieGoals, setCalorieGoals] = useState<CalorieGoals | null>(null);
+  const [quantityInputs, setQuantityInputs] = useState<{[key: number]: string}>({});
 
   // Lazy loading and pagination
   const [displayedFoodItems, setDisplayedFoodItems] = useState<FoodItem[]>([]);
@@ -132,21 +133,21 @@ const AddMealScreen = () => {
     'Salads'
   ];
 
-  // Function to get serving size for different food types
-  const getServingSize = (item: FoodItem) => {
-    const itemName = item.name.toLowerCase();
-    if (itemName.includes('bread') || item.category === 'Bread') {
-      return 25; // 25g for bread 
+  // Removed getServingSize function - users can now enter exact quantities
+
+  // Function to clean bread item names
+  const getDisplayName = (item: FoodItem) => {
+    if (item.name.toLowerCase().includes('bread') || item.category === 'Bread') {
+      // Remove (25g) from bread names
+      return item.name.replace(/\s*\(25g\)/gi, '').trim();
     }
-    return 100; // 100g for other items
+    return item.name;
   };
 
   // Function to display appropriate calorie information for different food types
   const getDisplayCalories = (item: FoodItem) => {
-    const itemName = item.name.toLowerCase();
-    
-    // For bread items, show calories for a typical serving (25g)
-    if (itemName.includes('bread') || item.category === 'Bread') {
+    // For bread items, show calories for a typical serving (25g slice)
+    if (item.name.toLowerCase().includes('bread') || item.category === 'Bread') {
       const caloriesPer25g = Math.round((item.calories_per_100g * 25) / 100);
       return `${caloriesPer25g} cal (25g slice)`;
     }
@@ -212,25 +213,28 @@ const AddMealScreen = () => {
 
   const addFoodItem = (foodItem: FoodItem) => {
     const existingItem = selectedItems.find(item => item.food_item_id === foodItem.id);
-    const servingSize = getServingSize(foodItem);
     
     if (existingItem) {
-      // Add one more serving to existing item
+      // If item already exists, just increment by 10g (small increment)
+      const newQuantity = existingItem.quantity_grams + 10;
       const updatedItems = selectedItems.map(item => 
         item.food_item_id === foodItem.id 
-          ? { ...item, quantity_grams: item.quantity_grams + servingSize }
+          ? { ...item, quantity_grams: newQuantity }
           : item
       );
       setSelectedItems(updatedItems);
+      setQuantityInputs({...quantityInputs, [foodItem.id]: newQuantity.toString()});
     } else {
-      // Add new item with one serving
+      // Add new item with default quantity (25g for bread, 100g for others)
+      const defaultQuantity = (foodItem.name.toLowerCase().includes('bread') || foodItem.category === 'Bread') ? 25 : 100;
       const newItem: MealItem = {
         food_item_id: foodItem.id,
         food_name: foodItem.name,
-        quantity_grams: servingSize,
-        calories: Math.round((foodItem.calories_per_100g * servingSize) / 100)
+        quantity_grams: defaultQuantity, // Default 25g for bread, 100g for others
+        calories: Math.round((foodItem.calories_per_100g * defaultQuantity) / 100)
       };
       setSelectedItems([...selectedItems, newItem]);
+      setQuantityInputs({...quantityInputs, [foodItem.id]: defaultQuantity.toString()});
     }
   };
 
@@ -242,16 +246,39 @@ const AddMealScreen = () => {
 
     const updatedItems = selectedItems.map(item => {
       if (item.food_item_id === itemId) {
-        const calories = Math.round((item.calories / item.quantity_grams) * quantity);
-        return { ...item, quantity_grams: quantity, calories };
+        // Find the food item to get calories_per_100g
+        const foodItem = foodItems.find(fi => fi.id === itemId);
+        if (foodItem) {
+          const calories = Math.round((foodItem.calories_per_100g * quantity) / 100);
+          return { ...item, quantity_grams: quantity, calories };
+        }
+        return item;
       }
       return item;
     });
     setSelectedItems(updatedItems);
   };
 
+  const incrementQuantity = (itemId: number) => {
+    const currentItem = selectedItems.find(item => item.food_item_id === itemId);
+    if (currentItem) {
+      updateItemQuantity(itemId, currentItem.quantity_grams + 1);
+    }
+  };
+
+  const decrementQuantity = (itemId: number) => {
+    const currentItem = selectedItems.find(item => item.food_item_id === itemId);
+    if (currentItem && currentItem.quantity_grams > 1) {
+      updateItemQuantity(itemId, currentItem.quantity_grams - 1);
+    }
+  };
+
   const removeItem = (itemId: number) => {
     setSelectedItems(selectedItems.filter(item => item.food_item_id !== itemId));
+    // Clean up input state
+    const newInputs = {...quantityInputs};
+    delete newInputs[itemId];
+    setQuantityInputs(newInputs);
   };
 
   const handleBackPress = () => {
@@ -303,6 +330,32 @@ const AddMealScreen = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNext = () => {
+    if (selectedItems.length === 0) {
+      Alert.alert('Error', 'Please add at least one food item');
+      return;
+    }
+
+    Alert.alert(
+      'Save Options',
+      'How would you like to save this meal?',
+      [
+        {
+          text: 'Save Meal',
+          onPress: saveMeal
+        },
+        {
+          text: 'Save as Template',
+          onPress: saveAsTemplate
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        }
+      ]
+    );
   };
 
   const saveAsTemplate = async () => {
@@ -472,54 +525,88 @@ const AddMealScreen = () => {
             {selectedItems.length > 0 && (
               <View style={styles.section}>
                 <Text variant="titleMedium" style={styles.sectionTitle}>
-                  Selected Items
+                  Selected Items ({selectedItems.length})
+                </Text>
+                <Text variant="bodySmall" style={styles.sectionSubtitle}>
+                  Adjust quantities to match what you actually ate
                 </Text>
                 {selectedItems.map(item => (
                   <Card key={item.food_item_id} style={styles.selectedItemCard}>
                     <Card.Content style={styles.selectedItemContent}>
-                      <View style={styles.selectedItemInfo}>
-                        <Text variant="titleMedium" style={styles.selectedItemName}>
-                          {item.food_name}
-                        </Text>
-                        <Text variant="bodyMedium" style={styles.selectedItemCalories}>
-                          {item.calories} calories
-                        </Text>
-                      </View>
-                      <View style={styles.quantityControls}>
-                        <IconButton
-                          icon="minus"
-                          size={20}
-                          onPress={() => {
-                            // Find the food item to determine serving size
-                            const foodItem = foodItems.find(fi => fi.id === item.food_item_id);
-                            const servingSize = foodItem ? getServingSize(foodItem) : 100;
-                            updateItemQuantity(item.food_item_id, item.quantity_grams - servingSize);
-                          }}
-                        />
-                        <TextInput
-                          value={item.quantity_grams.toString()}
-                          onChangeText={(text) => updateItemQuantity(item.food_item_id, parseInt(text) || 0)}
-                          keyboardType="numeric"
-                          mode="outlined"
-                          style={styles.quantityInput}
-                          right={<TextInput.Affix text="g" />}
-                        />
-                        <IconButton
-                          icon="plus"
-                          size={20}
-                          onPress={() => {
-                            // Find the food item to determine serving size
-                            const foodItem = foodItems.find(fi => fi.id === item.food_item_id);
-                            const servingSize = foodItem ? getServingSize(foodItem) : 100;
-                            updateItemQuantity(item.food_item_id, item.quantity_grams + servingSize);
-                          }}
-                        />
+                      {/* Food Item Header */}
+                      <View style={styles.foodItemHeader}>
+                        <View style={styles.foodItemInfo}>
+                          <Text variant="titleMedium" style={styles.selectedItemName}>
+                            {item.food_name}
+                          </Text>
+                          <View style={styles.calorieBadge}>
+                            <Text variant="bodySmall" style={styles.calorieBadgeText}>
+                              {item.calories} cal
+                            </Text>
+                          </View>
+                        </View>
                         <IconButton
                           icon="delete"
                           size={20}
                           onPress={() => removeItem(item.food_item_id)}
-                          iconColor="#666666"
+                          iconColor={COLORS.textSecondary}
+                          style={styles.deleteButton}
                         />
+                      </View>
+                      
+                      {/* Quantity Controls */}
+                      <View style={styles.quantitySection}>
+                        <Text variant="bodySmall" style={styles.quantityLabel}>
+                          Quantity (grams)
+                        </Text>
+                        <View style={styles.quantityControls}>
+                          <IconButton
+                            icon="minus"
+                            size={20}
+                            onPress={() => {
+                              decrementQuantity(item.food_item_id);
+                              const newQuantity = item.quantity_grams - 1;
+                              setQuantityInputs({...quantityInputs, [item.food_item_id]: newQuantity.toString()});
+                            }}
+                            style={styles.quantityButton}
+                            iconColor={COLORS.primary}
+                          />
+                          <View style={styles.quantityInputContainer}>
+                            <TextInput
+                              value={quantityInputs[item.food_item_id] || item.quantity_grams.toString()}
+                              onChangeText={(text) => {
+                                setQuantityInputs({...quantityInputs, [item.food_item_id]: text});
+                                const quantity = parseInt(text);
+                                if (!isNaN(quantity) && quantity > 0) {
+                                  updateItemQuantity(item.food_item_id, quantity);
+                                }
+                              }}
+                              onBlur={() => {
+                                const currentValue = quantityInputs[item.food_item_id];
+                                const quantity = parseInt(currentValue);
+                                if (isNaN(quantity) || quantity <= 0) {
+                                  setQuantityInputs({...quantityInputs, [item.food_item_id]: item.quantity_grams.toString()});
+                                }
+                              }}
+                              keyboardType="numeric"
+                              mode="outlined"
+                              style={styles.quantityInput}
+                              right={<TextInput.Affix text="g" />}
+                              placeholder="Enter amount"
+                            />
+                          </View>
+                          <IconButton
+                            icon="plus"
+                            size={20}
+                            onPress={() => {
+                              incrementQuantity(item.food_item_id);
+                              const newQuantity = item.quantity_grams + 1;
+                              setQuantityInputs({...quantityInputs, [item.food_item_id]: newQuantity.toString()});
+                            }}
+                            style={styles.quantityButton}
+                            iconColor={COLORS.primary}
+                          />
+                        </View>
                       </View>
                     </Card.Content>
                   </Card>
@@ -565,6 +652,9 @@ const AddMealScreen = () => {
               <Text variant="titleMedium" style={styles.sectionTitle}>
                 Available Food Items
               </Text>
+              <Text variant="bodySmall" style={styles.sectionSubtitle}>
+                Tap to add items, then adjust quantities to match what you ate
+              </Text>
               {loading ? (
                 <View style={styles.foodItemsLoadingContainer}>
                   <PaperActivityIndicator size="small" />
@@ -575,27 +665,31 @@ const AddMealScreen = () => {
                   {displayedFoodItems.map(item => (
                     <Card key={item.id} style={styles.foodItemCard}>
                       <Card.Content style={styles.foodItemContent}>
-                        <View style={styles.foodItemInfo}>
+                        <View style={styles.foodItemMainInfo}>
                           <Text variant="titleMedium" style={styles.foodItemName}>
-                            {item.name}
+                            {getDisplayName(item)}
                           </Text>
                           <Text variant="bodyMedium" style={styles.foodItemCalories}>
                             {getDisplayCalories(item)}
                           </Text>
+                        </View>
+                        
+                        <View style={styles.foodItemRightSection}>
                           {item.category && (
                             <Chip mode="outlined" style={styles.categoryTag}>
                               {item.category}
                             </Chip>
                           )}
+                          <Button
+                            mode="contained"
+                            onPress={() => addFoodItem(item)}
+                            style={styles.addButton}
+                            labelStyle={styles.addButtonLabel}
+                            theme={{ colors: { primary: COLORS.primary, onPrimary: COLORS.textLight } }}
+                          >
+                            Add
+                          </Button>
                         </View>
-                        <Button
-                          mode="contained"
-                          onPress={() => addFoodItem(item)}
-                          style={styles.addButton}
-                          theme={{ colors: { primary: COLORS.primary, onPrimary: COLORS.textLight } }}
-                        >
-                          Add
-                        </Button>
                       </Card.Content>
                     </Card>
                   ))}
@@ -620,34 +714,25 @@ const AddMealScreen = () => {
         )}
       </ScrollView>
 
-      {/* Action Buttons */}
+      {/* Action Button */}
       <View style={styles.footer}>
-        <View style={styles.buttonRow}>
-          <Button
-            mode="contained"
-            onPress={saveMeal}
-            loading={loading}
-            disabled={selectedItems.length === 0}
-            style={styles.saveButton}
-            contentStyle={styles.buttonContent}
-            labelStyle={styles.buttonLabel}
-            theme={{ colors: { primary: COLORS.primary, onPrimary: COLORS.textLight } }}
-          >
-            Save Meal
-          </Button>
-          <Button
-            mode="contained"
-            onPress={saveAsTemplate}
-            loading={loading}
-            disabled={selectedItems.length === 0}
-            style={styles.templateButton}
-            contentStyle={styles.buttonContent}
-            labelStyle={styles.buttonLabel}
-            theme={{ colors: { primary: COLORS.primary, onPrimary: COLORS.textLight } }}
-          >
-            Save as Template
-          </Button>
-        </View>
+        <Button
+          mode="contained"
+          onPress={handleNext}
+          loading={loading}
+          disabled={selectedItems.length === 0}
+          style={styles.nextButton}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
+          theme={{
+            colors: {
+              primary: COLORS.primary,
+              onPrimary: COLORS.textLight,
+            },
+          }}
+        >
+          Record Meal
+        </Button>
       </View>
 
       {/* Date Picker */}
@@ -712,7 +797,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontWeight: 'bold',
     color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  sectionSubtitle: {
+    color: COLORS.textSecondary,
     marginBottom: 12,
+    fontStyle: 'italic',
   },
 
   segmentedButtons: {
@@ -732,58 +822,132 @@ const styles = StyleSheet.create({
   },
 
   foodItemCard: {
-    marginBottom: 8,
+    marginBottom: 16,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   foodItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    padding: 16,
   },
-  foodItemInfo: {
-    flex: 1,
+  foodItemMainInfo: {
+    marginBottom: 8,
   },
   foodItemName: {
     fontWeight: 'bold',
     color: COLORS.textPrimary,
+    fontSize: 17,
+    marginBottom: 4,
+    lineHeight: 22,
   },
   foodItemCalories: {
     color: COLORS.textSecondary,
-    marginTop: 2,
+    fontSize: 15,
+    fontWeight: '500',
   },
-  categoryTag: {
-    alignSelf: 'flex-start',
-    marginTop: 4,
-  },
-  addButton: {
-    marginLeft: 12,
-  },
-  selectedItemCard: {
-    marginBottom: 8,
-    backgroundColor: COLORS.lightPrimary,
-  },
-  selectedItemContent: {
+  foodItemRightSection: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  selectedItemInfo: {
+  categoryTag: {
+    backgroundColor: COLORS.lightPrimary,
+    borderColor: COLORS.primary,
+    borderWidth: 1,
+  },
+  addButton: {
+    borderRadius: 8,
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  addButtonLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  selectedItemCard: {
+    marginBottom: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  selectedItemContent: {
+    padding: 12,
+  },
+  foodItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  foodItemInfo: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   selectedItemName: {
     fontWeight: 'bold',
     color: COLORS.textPrimary,
+    fontSize: 16,
+    marginRight: 12,
   },
-  selectedItemCalories: {
+  calorieBadge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  calorieBadgeText: {
+    color: COLORS.white,
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  deleteButton: {
+    margin: 0,
+  },
+  quantitySection: {
+    backgroundColor: COLORS.lightPrimary,
+    padding: 8,
+    borderRadius: 8,
+  },
+  quantityLabel: {
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginBottom: 6,
+    fontWeight: '500',
+    fontSize: 12,
   },
   quantityControls: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  quantityInput: {
+  quantityButton: {
+    backgroundColor: COLORS.white,
+    margin: 0,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    width: 36,
+    height: 36,
+  },
+  quantityInputContainer: {
     width: 80,
     marginHorizontal: 8,
+  },
+  quantityInput: {
+    backgroundColor: COLORS.white,
+    textAlign: 'center',
+    height: 36,
+    fontSize: 14,
   },
   totalSection: {
     padding: 16,
@@ -812,8 +976,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     elevation: 4,
   },
-  saveButton: {
-    flex: 1,
+  nextButton: {
+    width: '60%',
+    alignSelf: 'center',
   },
   buttonContent: {
     paddingVertical: 4,

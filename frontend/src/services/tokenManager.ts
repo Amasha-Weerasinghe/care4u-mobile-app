@@ -1,16 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_ENDPOINTS, STORAGE_KEYS } from '../constants/config';
-import { BaseApiService } from './baseApiService';
-import { Alert } from 'react-native';
-import {
-  LoginRequest,
-  LoginResponse,
-  VerifyOTPRequest,
-  VerifyOTPResponse,
-  CompleteProfileRequest,
-  CompleteProfileResponse,
-  GetUserResponse,
-} from '../types';
+import { STORAGE_KEYS } from '../constants/config';
 
 export interface TokenInfo {
   token: string;
@@ -19,70 +8,21 @@ export interface TokenInfo {
   email: string;
 }
 
-class AuthService extends BaseApiService {
+export class AuthTokenService {
+  private static instance: AuthTokenService;
   private tokenCheckInterval: NodeJS.Timeout | null = null;
-  // Authentication APIs
-  async login(data: LoginRequest): Promise<LoginResponse> {
-    return this.post(API_ENDPOINTS.LOGIN, data);
+
+  static getInstance(): AuthTokenService {
+    if (!AuthTokenService.instance) {
+      AuthTokenService.instance = new AuthTokenService();
+    }
+    return AuthTokenService.instance;
   }
 
-  async verifyOTP(data: VerifyOTPRequest): Promise<VerifyOTPResponse> {
-    return this.post(API_ENDPOINTS.VERIFY_OTP, data);
-  }
-
-  async completeProfile(data: CompleteProfileRequest): Promise<CompleteProfileResponse> {
-    return this.post(API_ENDPOINTS.COMPLETE_PROFILE, data);
-  }
-
-  async updateProfile(data: CompleteProfileRequest): Promise<CompleteProfileResponse> {
-    return this.put(API_ENDPOINTS.UPDATE_PROFILE, data);
-  }
-
-  async getUser(): Promise<GetUserResponse> {
-    return this.get(API_ENDPOINTS.GET_USER);
-  }
-
-  async checkAuth(): Promise<GetUserResponse> {
-    return this.get(API_ENDPOINTS.CHECK_AUTH);
-  }
-
-  // Token management
-  async setAuthToken(token: string): Promise<void> {
-    await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-  }
-
-  async getAuthToken(): Promise<string | null> {
-    return await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-  }
-
-  async removeAuthToken(): Promise<void> {
-    await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-  }
-
-  // User data management
-  async setUserData(userData: any): Promise<void> {
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
-  }
-
-  async getUserData(): Promise<any> {
-    const userData = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
-    return userData ? JSON.parse(userData) : null;
-  }
-
-  async removeUserData(): Promise<void> {
-    await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
-  }
-
-  // Logout
-  async logout(): Promise<void> {
-    await this.removeAuthToken();
-    await this.removeUserData();
-    this.stopTokenMonitoring();
-  }
-
-  // Token expiration handling
+  // Check if token is expired
   isTokenExpired(token: string): boolean {
     try {
+      // Decode JWT token (base64 decode)
       const parts = token.split('.');
       if (parts.length !== 3) return true;
 
@@ -97,6 +37,7 @@ class AuthService extends BaseApiService {
     }
   }
 
+  // Get token info
   getTokenInfo(token: string): TokenInfo | null {
     try {
       const parts = token.split('.');
@@ -117,6 +58,7 @@ class AuthService extends BaseApiService {
     }
   }
 
+  // Check if token expires soon (within 1 hour)
   isTokenExpiringSoon(token: string): boolean {
     try {
       const parts = token.split('.');
@@ -157,11 +99,11 @@ class AuthService extends BaseApiService {
   // Check current token status
   private async checkTokenStatus(): Promise<void> {
     try {
-      const token = await this.getAuthToken();
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       if (!token) return;
 
       if (this.isTokenExpired(token)) {
-        await this.handleAuthTokenExpiration();
+        await this.handleTokenExpiration();
       } else if (this.isTokenExpiringSoon(token)) {
         await this.handleTokenExpiringSoon();
       }
@@ -171,23 +113,15 @@ class AuthService extends BaseApiService {
   }
 
   // Handle token expiration
-  private async handleAuthTokenExpiration(): Promise<void> {
+  private async handleTokenExpiration(): Promise<void> {
     try {
-      await this.logout();
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.AUTH_TOKEN,
+        STORAGE_KEYS.USER_DATA,
+      ]);
 
-      Alert.alert(
-        'Session Expired',
-        'Your session has expired. Please log in again.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              console.log('Redirecting to login...');
-            },
-          },
-        ],
-        { cancelable: false }
-      );
+      // Emit event or trigger navigation
+      this.emitTokenExpired();
     } catch (error) {
       console.error('Error handling token expiration:', error);
     }
@@ -195,8 +129,30 @@ class AuthService extends BaseApiService {
 
   // Handle token expiring soon
   private async handleTokenExpiringSoon(): Promise<void> {
+    // You can implement refresh token logic here
+    // For now, just log a warning
     console.warn('Token will expire soon. Consider refreshing.');
+  }
+
+  // Emit token expired event
+  private emitTokenExpired(): void {
+    // You can implement event emission here
+    // This could trigger navigation to login screen
+    console.log('Token expired - user should be redirected to login');
+  }
+
+  // Clear all tokens
+  async clearTokens(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.AUTH_TOKEN,
+        STORAGE_KEYS.USER_DATA,
+      ]);
+      this.stopTokenMonitoring();
+    } catch (error) {
+      console.error('Error clearing tokens:', error);
+    }
   }
 }
 
-export default new AuthService();
+export default AuthTokenService.getInstance();

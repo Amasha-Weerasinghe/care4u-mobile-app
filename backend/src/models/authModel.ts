@@ -79,8 +79,8 @@ export class AuthModel {
     const roundedBmi = Math.round(bmi * 10) / 10;
 
     const result = await pool.query(
-      `UPDATE users SET 
-        first_name = $2, last_name = $3, contact_number = $4, 
+      `UPDATE users SET
+        first_name = $2, last_name = $3, contact_number = $4,
         birth_date = $5, gender = $6, height = $7, weight = $8,
         emergency_contact_name = $9, emergency_contact_number = $10,
         dietary_preference = $11, calorie_intake_goal = $12, calorie_burn_goal = $13,

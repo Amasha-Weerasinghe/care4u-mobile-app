@@ -16,7 +16,7 @@ export class AppointmentService {
         throw new Error('Invalid date format. Use YYYY-MM-DD');
       }
 
-      // Validate time format 
+      // Validate time format
       const timeRegex = /^(\d{1,2}):(\d{2})(:\d{2})?\s*(AM|PM|am|pm)?$/;
       if (!timeRegex.test(appointmentData.time)) {
         throw new Error('Invalid time format. Use HH:MM, HH:MM:SS, or 12-hour format like "4:30 PM"');

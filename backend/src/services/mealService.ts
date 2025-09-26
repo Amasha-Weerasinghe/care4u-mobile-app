@@ -133,7 +133,7 @@ export class MealService {
     return {
       ...template,
       items: templateItems.map(item => ({
-        id: 0, 
+        id: 0,
         template_id: template.id,
         food_item_id: item.food_item_id,
         food_name: '',
@@ -201,10 +201,10 @@ export class MealService {
     return {
       ...record,
       items: recordItems.map(item => ({
-        id: 0, 
+        id: 0,
         meal_record_id: record.id,
         food_item_id: item.food_item_id,
-        food_name: '', 
+        food_name: '',
         quantity_grams: item.quantity_grams,
         calories: item.calories
       }))
@@ -258,21 +258,21 @@ export class MealService {
     message: string;
   } {
     const percentage = (mealCalories / mealTypeGoal) * 100;
-    
+
     if (percentage <= 80) {
-      return { 
-        status: 'ideal', 
-        message: 'Calorie intake is within ideal range' 
+      return {
+        status: 'ideal',
+        message: 'Calorie intake is within ideal range'
       };
     } else if (percentage <= 100) {
-      return { 
-        status: 'about_to_exceed', 
-        message: 'Calorie intake is approaching the limit' 
+      return {
+        status: 'about_to_exceed',
+        message: 'Calorie intake is approaching the limit'
       };
     } else {
-      return { 
-        status: 'exceeding', 
-        message: 'Calorie intake exceeds the recommended limit' 
+      return {
+        status: 'exceeding',
+        message: 'Calorie intake exceeds the recommended limit'
       };
     }
   }
@@ -287,7 +287,7 @@ export class MealService {
       throw new Error('User not found');
     }
 
-    const dailyCalorieGoal = user.calorie_intake_goal || 2000; 
+    const dailyCalorieGoal = user.calorie_intake_goal || 2000;
     const mealTypeGoal = dailyCalorieGoal / 4; // Distribute daily goal across meals
 
     return this.calculateCalorieStatus(mealCalories, mealTypeGoal);
@@ -309,9 +309,9 @@ export class MealService {
   }> {
     // Get user's calorie goals
     const calorieGoals = await MealModel.getCalorieGoals(userId);
-    const calorieGoal = calorieGoals?.calorie_intake_goal || 2000; 
+    const calorieGoal = calorieGoals?.calorie_intake_goal || 2000;
 
-    // Get today's date in YYYY-MM-DD format 
+    // Get today's date in YYYY-MM-DD format
     const todayString = getCurrentDate();
 
     // Get today's meal records
@@ -322,7 +322,7 @@ export class MealService {
     const totalMeals = todayMeals.length;
     const remainingCalories = Math.max(0, calorieGoal - totalCalories);
     const progressPercentage = Math.min(100, (totalCalories / calorieGoal) * 100);
- 
+
     const meals = todayMeals.map(meal => ({
       id: meal.id,
       meal_type: meal.meal_type,
@@ -335,7 +335,7 @@ export class MealService {
       totalMeals,
       calorieGoal,
       remainingCalories,
-      progressPercentage: Math.round(progressPercentage * 100) / 100, 
+      progressPercentage: Math.round(progressPercentage * 100) / 100,
       meals
     };
   }

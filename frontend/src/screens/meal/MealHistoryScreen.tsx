@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Modal, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, Modal, RefreshControl } from 'react-native';
 import { 
   Text, 
   Button, 

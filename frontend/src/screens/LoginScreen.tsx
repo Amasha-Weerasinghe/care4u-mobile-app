@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   Alert,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { TextInput, Button, Text, Surface, HelperText } from 'react-native-paper';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import { COLORS } from '../constants/theme';
+import { APP_CONFIG } from '../constants/config';
 import authService from '../services/authService';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
@@ -79,7 +80,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           {/* Header */}
           <View style={styles.header}>
             <Text variant="headlineMedium" style={styles.title}>
-              Welcome to Care4U 👋
+              Welcome to {APP_CONFIG.APP_NAME} 👋
             </Text>
             <Text variant="bodyMedium" style={styles.subtitle}>
               Enter your email to login
@@ -124,7 +125,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               style={styles.button}
               contentStyle={styles.buttonContent}
               labelStyle={styles.buttonLabel}
-              icon="email-send"
+              icon="email"
               theme={{
                 colors: {
                   primary: COLORS.primary,

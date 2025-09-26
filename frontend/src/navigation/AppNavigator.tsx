@@ -8,7 +8,6 @@ import CompleteProfileScreen from '../screens/CompleteProfileScreen';
 import MainTabNavigator from './MainTabNavigator';
 import ProfileScreen from '../screens/ProfileScreen';
 import AddMealScreen from '../screens/meal/AddMealScreen';
-
 import AddMealItemScreen from '../screens/meal/AddMealItemScreen';
 import MealTemplatesScreen from '../screens/meal/MealTemplatesScreen';
 import MealHistoryScreen from '../screens/meal/MealHistoryScreen';

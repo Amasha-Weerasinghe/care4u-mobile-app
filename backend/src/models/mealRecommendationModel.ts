@@ -26,7 +26,7 @@ export class MealRecommendationModel {
   ): { query: string; params: any[] } {
     let query = `
       SELECT meal_id, meal_type, meal, calories, is_veg
-      FROM meal_recommendations 
+      FROM meal_recommendations
       WHERE 1=1
     `;
 
@@ -111,7 +111,7 @@ export class MealRecommendationModel {
     try {
       const query = `
         SELECT meal_id, meal_type, meal, calories, is_veg
-        FROM meal_recommendations 
+        FROM meal_recommendations
         ORDER BY meal_type, meal_id
       `;
 
@@ -148,7 +148,7 @@ export class MealRecommendationModel {
     try {
       const query = `
         SELECT meal_id, meal_type, meal, calories, is_veg
-        FROM meal_recommendations 
+        FROM meal_recommendations
         WHERE meal_id = $1
       `;
 
@@ -165,7 +165,7 @@ export class MealRecommendationModel {
     try {
       const query = `
         SELECT DISTINCT meal_type
-        FROM meal_recommendations 
+        FROM meal_recommendations
         ORDER BY meal_type
       `;
 
@@ -182,7 +182,7 @@ export class MealRecommendationModel {
     try {
       const query = `
         SELECT meal_type, COUNT(*) as count
-        FROM meal_recommendations 
+        FROM meal_recommendations
         GROUP BY meal_type
         ORDER BY meal_type
       `;

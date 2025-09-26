@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from '../constants/config';
+import { API_ENDPOINTS, STORAGE_KEYS } from '../constants/config';
 import { BaseApiService } from './baseApiService';
 import { Appointment } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -59,8 +59,8 @@ class AppointmentService extends BaseApiService {
       return await this.get(API_ENDPOINTS.APPOINTMENTS);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        await AsyncStorage.removeItem('auth_token');
-        await AsyncStorage.removeItem('user_data');
+        await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
       }
       throw error;
     }
@@ -92,8 +92,8 @@ class AppointmentService extends BaseApiService {
       return await this.get(`${API_ENDPOINTS.APPOINTMENTS_UPCOMING}?limit=${limit}`);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        await AsyncStorage.removeItem('auth_token');
-        await AsyncStorage.removeItem('user_data');
+        await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
       }
       throw error;
     }
@@ -105,8 +105,8 @@ class AppointmentService extends BaseApiService {
       return await this.get(`${API_ENDPOINTS.APPOINTMENTS_PAST}?limit=${limit}`);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        await AsyncStorage.removeItem('auth_token');
-        await AsyncStorage.removeItem('user_data');
+        await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
       }
       throw error;
     }

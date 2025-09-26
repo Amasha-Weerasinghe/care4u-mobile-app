@@ -57,8 +57,8 @@ export class AppointmentModel {
       client = await pool.connect();
       const query = `
         SELECT id, user_id, title, TO_CHAR(date, 'YYYY-MM-DD') as date, time, location, notes, created_at, updated_at
-        FROM appointments 
-        WHERE user_id = $1 
+        FROM appointments
+        WHERE user_id = $1
         ORDER BY date ASC, time ASC
       `;
 
@@ -81,7 +81,7 @@ export class AppointmentModel {
       client = await pool.connect();
       const query = `
         SELECT id, user_id, title, TO_CHAR(date, 'YYYY-MM-DD') as date, time, location, notes, created_at, updated_at
-        FROM appointments 
+        FROM appointments
         WHERE id = $1 AND user_id = $2
       `;
 
@@ -139,7 +139,7 @@ export class AppointmentModel {
       values.push(id, userId);
 
       const query = `
-        UPDATE appointments 
+        UPDATE appointments
         SET ${fields.join(', ')}
         WHERE id = $${paramCount++} AND user_id = $${paramCount++}
         RETURNING id, user_id, title, TO_CHAR(date, 'YYYY-MM-DD') as date, time, location, notes, created_at, updated_at
@@ -163,7 +163,7 @@ export class AppointmentModel {
     try {
       client = await pool.connect();
       const query = `
-        DELETE FROM appointments 
+        DELETE FROM appointments
         WHERE id = $1 AND user_id = $2
       `;
 
@@ -191,7 +191,7 @@ export class AppointmentModel {
 
       const query = `
         SELECT id, user_id, title, TO_CHAR(date, 'YYYY-MM-DD') as date, time, location, notes, created_at, updated_at
-        FROM appointments 
+        FROM appointments
         WHERE user_id = $1 AND date = $2::date
         ORDER BY time ASC
       `;
@@ -320,7 +320,7 @@ export class AppointmentModel {
       // Get all appointments for the user
       const query = `
         SELECT id, user_id, title, TO_CHAR(date, 'YYYY-MM-DD') as date, time, location, notes, created_at, updated_at
-        FROM appointments 
+        FROM appointments
         WHERE user_id = $1
         ORDER BY date ASC, time ASC
       `;
@@ -365,7 +365,7 @@ export class AppointmentModel {
       // Get all appointments for the user
       const query = `
         SELECT id, user_id, title, TO_CHAR(date, 'YYYY-MM-DD') as date, time, location, notes, created_at, updated_at
-        FROM appointments 
+        FROM appointments
         WHERE user_id = $1
         ORDER BY date DESC, time DESC
       `;

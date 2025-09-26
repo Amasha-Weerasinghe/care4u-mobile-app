@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   Alert,
@@ -11,10 +10,12 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
 import { COLORS } from '../constants/theme';
+import { APP_CONFIG } from '../constants/config';
 import CustomButton from '../components/CustomButton';
 import authService from '../services/authService';
 
@@ -36,7 +37,7 @@ const OTPVerificationScreen: React.FC<OTPVerificationScreenProps> = ({ navigatio
 
   useEffect(() => {
     // Initialize countdown when screen loads
-    setCountdown(60);
+    setCountdown(APP_CONFIG.OTP_EXPIRY_MINUTES * 60);
   }, []);
 
   useEffect(() => {
@@ -126,7 +127,7 @@ const OTPVerificationScreen: React.FC<OTPVerificationScreenProps> = ({ navigatio
       
       if (response.success) {
         Alert.alert('Success', 'New verification code sent to your email');
-        setCountdown(60);
+        setCountdown(APP_CONFIG.OTP_EXPIRY_MINUTES * 60);
         // Clear the already entered OTP
         setOtp(['', '', '', '', '', '']);
         

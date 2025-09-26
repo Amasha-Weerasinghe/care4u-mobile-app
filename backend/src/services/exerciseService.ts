@@ -25,9 +25,9 @@ export class ExerciseService {
     // Normalize activity type
     const normalizedActivityType = data.activity_type.toLowerCase().trim();
 
-    // Validate activity type 
+    // Validate activity type
     const validActivityTypes = [
-      'walking', 'running', 'cycling', 'yoga', 'stretching', 
+      'walking', 'running', 'cycling', 'yoga', 'stretching',
       'zumba'
     ];
 
@@ -98,7 +98,7 @@ export class ExerciseService {
 
   // Update exercise activity
   static async updateExercise(userId: number, exerciseId: number, data: UpdateExerciseRequest): Promise<ExerciseActivity> {
-    
+
     if (!exerciseId || exerciseId <= 0) {
       throw new Error('Invalid exercise ID');
     }
@@ -133,7 +133,7 @@ export class ExerciseService {
 
   // Delete exercise activity
   static async deleteExercise(userId: number, exerciseId: number): Promise<void> {
-    
+
     if (!exerciseId || exerciseId <= 0) {
       throw new Error('Invalid exercise ID');
     }
@@ -148,7 +148,7 @@ export class ExerciseService {
 
   // Delete exercise activities by date and type
   static async deleteExerciseActivitiesByDateAndType(userId: number, activityDate: string, activityType: string): Promise<number> {
-    
+
     if (!isValidDate(activityDate)) {
       throw new Error('Invalid date format. Use YYYY-MM-DD format.');
     }
@@ -194,7 +194,7 @@ export class ExerciseService {
   // Calculate calories burned based on activity type and duration
   static calculateCaloriesBurned(activityType: string, durationSeconds: number, userWeight?: number): number {
     const weight = userWeight || 70;
-    
+
     // MET values for different activities (Metabolic Equivalent of Task)
     const metValues: { [key: string]: number } = {
       'walking': 3.5,
@@ -206,11 +206,11 @@ export class ExerciseService {
     };
 
     const met = metValues[activityType.toLowerCase()] || 4.0; // Default MET value
-    
+
     // Formula: Calories = MET × Weight (kg) × Duration (hours)
-    const durationHours = durationSeconds / 3600; 
+    const durationHours = durationSeconds / 3600;
     const calories = Math.round(met * weight * durationHours);
-    
+
     return Math.max(calories, 1); // Ensure at least 1 calorie
   }
 
@@ -225,9 +225,9 @@ export class ExerciseService {
   }> {
     try {
       const activities = await ExerciseModel.getExerciseHistory(userId, {});
-      
+
       // Filter activities within date range
-      const filteredActivities = activities.filter(activity => 
+      const filteredActivities = activities.filter(activity =>
         activity.activity_date >= startDate && activity.activity_date <= endDate
       );
 
@@ -254,7 +254,7 @@ export class ExerciseService {
         activityCounts[activity.activity_type] = (activityCounts[activity.activity_type] || 0) + 1;
       });
 
-      const mostCommonActivity = Object.keys(activityCounts).reduce((a, b) => 
+      const mostCommonActivity = Object.keys(activityCounts).reduce((a, b) =>
         activityCounts[a] > activityCounts[b] ? a : b
       );
 

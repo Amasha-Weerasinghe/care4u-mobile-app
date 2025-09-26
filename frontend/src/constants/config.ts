@@ -46,12 +46,13 @@ export const API_ENDPOINTS = {
   APPOINTMENTS_PAST: '/api/appointments/past',
 };
 
-// App Configuration
 export const APP_CONFIG = {
   APP_NAME: 'Care4U',
   VERSION: '1.0.0',
-  OTP_EXPIRY_MINUTES: 10,
-  TOKEN_EXPIRY_DAYS: 360,
+  OTP_EXPIRY_MINUTES: 1,
+  JWT_ACCESS_TOKEN_EXPIRY_DAYS: 7,
+  JWT_REFRESH_TOKEN_EXPIRY_DAYS: 30,
+  JWT_TEMP_TOKEN_EXPIRY_HOURS: 1,
 };
 
 // Storage Keys

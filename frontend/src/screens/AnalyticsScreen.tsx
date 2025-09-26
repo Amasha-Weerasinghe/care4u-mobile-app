@@ -2,21 +2,19 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   Dimensions,
   TouchableOpacity,
-  Alert,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Card, Chip, ActivityIndicator, Button, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
+import { LineChart } from 'react-native-chart-kit';
 import { COLORS } from '../constants/theme';
 import mealService from '../services/mealService';
 import sugarService from '../services/sugarService';
 import exerciseService from '../services/exerciseService';
-import { CalorieGoals } from '../types';
 import { SugarRecord, SugarSummary } from '../services/sugarService';
 import { ExerciseActivity, ExerciseSummary } from '../services/exerciseService';
 

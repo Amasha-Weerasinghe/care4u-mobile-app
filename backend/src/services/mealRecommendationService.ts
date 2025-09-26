@@ -6,8 +6,8 @@ import { addDays, formatDate } from '../utils/timeUtils';
 export class MealRecommendationService {
   // Get meal recommendations based on user's dietary preference and meal type
   static async getMealRecommendations(
-    userId: number, 
-    mealType?: string, 
+    userId: number,
+    mealType?: string,
     limit: number = 1
   ): Promise<MealRecommendation[]> {
     try {
@@ -31,7 +31,7 @@ export class MealRecommendationService {
 
   // Get meal recommendations for all meal types (breakfast, lunch, dinner)
   static async getAllMealRecommendations(
-    userId: number, 
+    userId: number,
     limitPerType: number = 1
   ): Promise<{
     breakfast: MealRecommendation[];
@@ -84,25 +84,25 @@ export class MealRecommendationService {
 
       const weeklyRecommendations = [];
       const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-      
+
       // Get current date
       const today = new Date();
-      
+
       for (let i = 0; i < 7; i++) {
         const currentDate = addDays(today, i);
-        
+
         const dayName = days[i];
         const dateString = formatDate(currentDate);
-        
+
         // Use the pre-fetched unique meals for each day
         const breakfast = [breakfastMeals[i]];
         const lunch = [lunchMeals[i]];
         const dinner = [dinnerMeals[i]];
-        
-        const totalCalories = (breakfast[0]?.calories || 0) + 
-                             (lunch[0]?.calories || 0) + 
+
+        const totalCalories = (breakfast[0]?.calories || 0) +
+                             (lunch[0]?.calories || 0) +
                              (dinner[0]?.calories || 0);
-        
+
         weeklyRecommendations.push({
           day: dayName,
           date: dateString,
@@ -112,7 +112,7 @@ export class MealRecommendationService {
           totalCalories
         });
       }
-      
+
       return weeklyRecommendations;
     } catch (error) {
       console.error('Error in getWeeklyMealRecommendations:', error);

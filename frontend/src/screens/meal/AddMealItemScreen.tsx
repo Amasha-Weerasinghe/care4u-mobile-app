@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { 
   Text, 
   TextInput, 
@@ -24,8 +24,10 @@ const AddMealItemScreen = () => {
   
   const [category, setCategory] = useState<string>('');
   const [itemName, setItemName] = useState('');
-  const [quantityGrams, setQuantityGrams] = useState('100');
-  const [calories, setCalories] = useState('');
+  const [caloriesPer100g, setCaloriesPer100g] = useState('');
+  const [inputMethod, setInputMethod] = useState<'per100g' | 'exact'>('per100g');
+  const [exactQuantity, setExactQuantity] = useState('');
+  const [exactCalories, setExactCalories] = useState('');
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
@@ -55,10 +57,10 @@ const AddMealItemScreen = () => {
 
   // Function to display appropriate calorie information for different food types
   const getDisplayCalories = () => {
-    const caloriesPer100g = calculateCaloriesPer100g();
+    const caloriesPer100g = getCaloriesPer100g();
     if (caloriesPer100g <= 0) return '';
     
-    // For bread items, show calories for a typical serving 
+    // For bread items, show calories for a typical serving (25g slice)
     if (itemName.toLowerCase().includes('bread') || category === 'Bread') {
       const caloriesPer25g = Math.round((caloriesPer100g * 25) / 100);
       return `${caloriesPer25g} cal (25g slice)`;
@@ -73,14 +75,7 @@ const AddMealItemScreen = () => {
     loadUserFoodItems();
   }, []);
 
-  // Update quantity when category changes
-  useEffect(() => {
-    if (category === 'Bread') {
-      setQuantityGrams('25');
-    } else if (quantityGrams === '25' && category !== 'Bread') {
-      setQuantityGrams('100');
-    }
-  }, [category]);
+  // No need to update quantity since we're using calories per 100g directly
 
   const loadCategories = async () => {
     try {
@@ -114,10 +109,10 @@ const AddMealItemScreen = () => {
   const loadEditData = (item: any) => {
     setCategory(item.category);
     setItemName(item.name);
-    // Set appropriate default quantity based on category
-    const defaultQuantity = item.category === 'Bread' ? '25' : '100';
-    setQuantityGrams(defaultQuantity); 
-    setCalories(item.calories_per_100g.toString());
+    setCaloriesPer100g(item.calories_per_100g.toString());
+    setInputMethod('per100g');
+    setExactQuantity('');
+    setExactCalories('');
     setOriginalData({
       category: item.category,
       name: item.name,
@@ -140,13 +135,21 @@ const AddMealItemScreen = () => {
       Alert.alert('Error', 'Please enter meal item name');
       return false;
     }
-    if (!quantityGrams || parseFloat(quantityGrams) <= 0) {
-      Alert.alert('Error', 'Please enter a valid quantity');
-      return false;
-    }
-    if (!calories || parseFloat(calories) <= 0) {
-      Alert.alert('Error', 'Please enter valid calories');
-      return false;
+    
+    if (inputMethod === 'per100g') {
+      if (!caloriesPer100g || parseFloat(caloriesPer100g) <= 0) {
+        Alert.alert('Error', 'Please enter valid calories per 100g');
+        return false;
+      }
+    } else {
+      if (!exactQuantity || parseFloat(exactQuantity) <= 0) {
+        Alert.alert('Error', 'Please enter valid quantity');
+        return false;
+      }
+      if (!exactCalories || parseFloat(exactCalories) <= 0) {
+        Alert.alert('Error', 'Please enter valid calories');
+        return false;
+      }
     }
     return true;
   };
@@ -157,15 +160,21 @@ const AddMealItemScreen = () => {
     try {
       setLoading(true);
       
-      // Calculate calories per 100g for storage
-      const quantity = parseFloat(quantityGrams);
-      const totalCalories = parseFloat(calories);
-      const caloriesPer100g = Math.round((totalCalories / quantity) * 100);
-
+      // Calculate calories per 100g based on input method
+      let finalCaloriesPer100g: number;
+      if (inputMethod === 'per100g') {
+        finalCaloriesPer100g = parseFloat(caloriesPer100g);
+      } else {
+        // Convert exact amount to per 100g
+        const quantity = parseFloat(exactQuantity);
+        const calories = parseFloat(exactCalories);
+        finalCaloriesPer100g = Math.round((calories / quantity) * 100);
+      }
+      
       const foodItemData = {
         name: itemName.trim(),
         category: category,
-        calories_per_100g: caloriesPer100g,
+        calories_per_100g: finalCaloriesPer100g,
         is_veg: true 
       };
 
@@ -180,8 +189,10 @@ const AddMealItemScreen = () => {
               setSelectedItem(null);
               setCategory('');
               setItemName('');
-              setQuantityGrams('100');
-              setCalories('');
+              setCaloriesPer100g('');
+              setInputMethod('per100g');
+              setExactQuantity('');
+              setExactCalories('');
               setHasChanges(false);
             }}
           ]);
@@ -195,8 +206,10 @@ const AddMealItemScreen = () => {
               loadUserFoodItems(); 
               setCategory('');
               setItemName('');
-              setQuantityGrams('100');
-              setCalories('');
+              setCaloriesPer100g('');
+              setInputMethod('per100g');
+              setExactQuantity('');
+              setExactCalories('');
               setHasChanges(false);
             }}
           ]);
@@ -210,14 +223,21 @@ const AddMealItemScreen = () => {
     }
   };
 
-  const calculateCaloriesPer100g = () => {
-    const quantity = parseFloat(quantityGrams) || 0;
-    const totalCalories = parseFloat(calories) || 0;
-    
-    if (quantity > 0 && totalCalories > 0) {
-      return Math.round((totalCalories / quantity) * 100);
+  const getCaloriesPer100g = () => {
+    if (inputMethod === 'per100g') {
+      return parseFloat(caloriesPer100g) || 0;
+    } else {
+      const quantity = parseFloat(exactQuantity) || 0;
+      const calories = parseFloat(exactCalories) || 0;
+      if (quantity > 0 && calories > 0) {
+        // For bread, if quantity is 25g, it's a slice - convert to per-100g
+        if ((itemName.toLowerCase().includes('bread') || category === 'Bread') && quantity === 25) {
+          return Math.round((calories * 100) / 25); // Convert slice calories to per-100g
+        }
+        return Math.round((calories / quantity) * 100);
+      }
+      return 0;
     }
-    return 0;
   };
 
   const handleDeleteItem = (itemId: number) => {
@@ -240,8 +260,10 @@ const AddMealItemScreen = () => {
                     setSelectedItem(null);
                     setCategory('');
                     setItemName('');
-                    setQuantityGrams('100');
-                    setCalories('');
+                    setCaloriesPer100g('');
+                    setInputMethod('per100g');
+                    setExactQuantity('');
+                    setExactCalories('');
                     setHasChanges(false);
                   }}
                 ]);
@@ -296,8 +318,10 @@ const AddMealItemScreen = () => {
               setActiveTab(value as 'add' | 'update');
               setCategory('');
               setItemName('');
-              setQuantityGrams('100');
-              setCalories('');
+              setCaloriesPer100g('');
+              setInputMethod('per100g');
+              setExactQuantity('');
+              setExactCalories('');
               setSelectedItem(null);
               setHasChanges(false);
             }}
@@ -352,52 +376,95 @@ const AddMealItemScreen = () => {
               />
             </View>
 
-            {/* Quantity and Calories */}
+            {/* Nutritional Information */}
             <View style={styles.section}>
               <Text variant="titleMedium" style={styles.sectionTitle}>
-                Quantity & Calories
+                Nutritional Information
               </Text>
               
-              <View style={styles.row}>
-                <View style={styles.halfWidth}>
-                  <TextInput
-                    label="Quantity (grams)"
-                    value={quantityGrams}
-                    onChangeText={(text) => {
-                      setQuantityGrams(text);
-                      setHasChanges(true);
-                    }}
-                    mode="outlined"
-                    style={styles.input}
-                    keyboardType="numeric"
-                    placeholder="100"
-                    right={<TextInput.Affix text="g" />}
-                  />
-                </View>
-                <View style={styles.halfWidth}>
-                  <TextInput
-                    label="Calories"
-                    value={calories}
-                    onChangeText={(text) => {
-                      setCalories(text);
-                      setHasChanges(true);
-                    }}
-                    mode="outlined"
-                    style={styles.input}
-                    keyboardType="numeric"
-                    placeholder="165"
-                    right={<TextInput.Affix text="cal" />}
-                  />
-                </View>
+              {/* Input Method Toggle */}
+              <View style={styles.inputMethodContainer}>
+                <Text variant="bodyMedium" style={styles.inputMethodLabel}>
+                  How do you want to enter nutritional data?
+                </Text>
+                <SegmentedButtons
+                  value={inputMethod}
+                  onValueChange={(value) => {
+                    setInputMethod(value as 'per100g' | 'exact');
+                    setHasChanges(true);
+                  }}
+                  buttons={[
+                    { value: 'per100g', label: 'Per 100g' },
+                    { value: 'exact', label: 'Exact Amount' }
+                  ]}
+                  style={styles.inputMethodButtons}
+                />
               </View>
 
+              {inputMethod === 'per100g' ? (
+                <TextInput
+                  label="Calories per 100g"
+                  value={caloriesPer100g}
+                  onChangeText={(text) => {
+                    setCaloriesPer100g(text);
+                    setHasChanges(true);
+                  }}
+                  mode="outlined"
+                  style={styles.input}
+                  keyboardType="numeric"
+                  placeholder="165"
+                  right={<TextInput.Affix text="cal/100g" />}
+                  helperText="Enter the calorie content per 100 grams of this food item"
+                />
+              ) : (
+                <View style={styles.row}>
+                  <View style={styles.halfWidth}>
+                    <TextInput
+                      label={itemName.toLowerCase().includes('bread') || category === 'Bread' ? "Slice weight (grams)" : "Portion size (grams)"}
+                      value={exactQuantity}
+                      onChangeText={(text) => {
+                        setExactQuantity(text);
+                        setHasChanges(true);
+                      }}
+                      mode="outlined"
+                      style={styles.input}
+                      keyboardType="numeric"
+                      placeholder={itemName.toLowerCase().includes('bread') || category === 'Bread' ? "25" : "60"}
+                      right={<TextInput.Affix text="g" />}
+                      helperText={itemName.toLowerCase().includes('bread') || category === 'Bread' ? "Weight of one slice (typically 25g)" : "Amount you actually ate"}
+                    />
+                  </View>
+                  <View style={styles.halfWidth}>
+                    <TextInput
+                      label={itemName.toLowerCase().includes('bread') || category === 'Bread' ? "Calories per slice" : "Calories in this portion"}
+                      value={exactCalories}
+                      onChangeText={(text) => {
+                        setExactCalories(text);
+                        setHasChanges(true);
+                      }}
+                      mode="outlined"
+                      style={styles.input}
+                      keyboardType="numeric"
+                      placeholder={itemName.toLowerCase().includes('bread') || category === 'Bread' ? "70" : "5"}
+                      right={<TextInput.Affix text="cal" />}
+                      helperText={itemName.toLowerCase().includes('bread') || category === 'Bread' ? "Calories in one slice" : "Calories in this exact portion"}
+                    />
+                  </View>
+                </View>
+              )}
+
               {/* Calories calculation */}
-              {calculateCaloriesPer100g() > 0 && (
+              {getCaloriesPer100g() > 0 && (
                 <View style={styles.calculationCard}>
                   <Text style={styles.calculationTitle}>
                     {itemName.toLowerCase().includes('bread') || category === 'Bread' ? 'Calories per slice:' : 'Calories per 100g:'}
                   </Text>
                   <Text style={styles.calculationValue}>{getDisplayCalories()}</Text>
+                  {inputMethod === 'exact' && (
+                    <Text style={styles.calculationNote}>
+                      Calculated: {exactQuantity}g = {exactCalories} cal → {getCaloriesPer100g()} cal/100g
+                    </Text>
+                  )}
                 </View>
               )}
             </View>
@@ -412,7 +479,7 @@ const AddMealItemScreen = () => {
                   <Text style={styles.previewTitle}>{itemName}</Text>
                   <Text style={styles.previewCategory}>Category: {category}</Text>
                   <Text style={styles.previewDetails}>
-                    {quantityGrams}g = {calories} calories ({getDisplayCalories()})
+                    {getDisplayCalories()}
                   </Text>
                 </View>
               </View>
@@ -503,52 +570,93 @@ const AddMealItemScreen = () => {
                   />
                 </View>
 
-                {/* Quantity and Calories */}
+                {/* Nutritional Information */}
                 <View style={styles.section}>
                   <Text variant="titleMedium" style={styles.sectionTitle}>
-                    Quantity & Calories
+                    Nutritional Information
                   </Text>
                   
-                  <View style={styles.row}>
-                    <View style={styles.halfWidth}>
-                      <TextInput
-                        label="Quantity (grams)"
-                        value={quantityGrams}
-                        onChangeText={(text) => {
-                          setQuantityGrams(text);
-                          setHasChanges(true);
-                        }}
-                        mode="outlined"
-                        style={styles.input}
-                        keyboardType="numeric"
-                        placeholder="100"
-                        right={<TextInput.Affix text="g" />}
-                      />
-                    </View>
-                    <View style={styles.halfWidth}>
-                      <TextInput
-                        label="Calories"
-                        value={calories}
-                        onChangeText={(text) => {
-                          setCalories(text);
-                          setHasChanges(true);
-                        }}
-                        mode="outlined"
-                        style={styles.input}
-                        keyboardType="numeric"
-                        placeholder="165"
-                        right={<TextInput.Affix text="cal" />}
-                      />
-                    </View>
+                  {/* Input Method Toggle */}
+                  <View style={styles.inputMethodContainer}>
+                    <Text variant="bodyMedium" style={styles.inputMethodLabel}>
+                      How do you want to enter nutritional data?
+                    </Text>
+                    <SegmentedButtons
+                      value={inputMethod}
+                      onValueChange={(value) => {
+                        setInputMethod(value as 'per100g' | 'exact');
+                        setHasChanges(true);
+                      }}
+                      buttons={[
+                        { value: 'per100g', label: 'Per 100g' },
+                        { value: 'exact', label: 'Exact Amount' }
+                      ]}
+                      style={styles.inputMethodButtons}
+                    />
                   </View>
 
+                  {inputMethod === 'per100g' ? (
+                    <TextInput
+                      label="Calories per 100g"
+                      value={caloriesPer100g}
+                      onChangeText={(text) => {
+                        setCaloriesPer100g(text);
+                        setHasChanges(true);
+                      }}
+                      mode="outlined"
+                      style={styles.input}
+                      keyboardType="numeric"
+                      placeholder="165"
+                      right={<TextInput.Affix text="cal/100g" />}
+                      helperText="Enter the calorie content per 100 grams of this food item"
+                    />
+                  ) : (
+                    <View style={styles.row}>
+                      <View style={styles.halfWidth}>
+                        <TextInput
+                          label="Quantity (grams)"
+                          value={specificQuantity}
+                          onChangeText={(text) => {
+                            setSpecificQuantity(text);
+                            setHasChanges(true);
+                          }}
+                          mode="outlined"
+                          style={styles.input}
+                          keyboardType="numeric"
+                          placeholder="60"
+                          right={<TextInput.Affix text="g" />}
+                        />
+                      </View>
+                      <View style={styles.halfWidth}>
+                        <TextInput
+                          label="Calories"
+                          value={specificCalories}
+                          onChangeText={(text) => {
+                            setSpecificCalories(text);
+                            setHasChanges(true);
+                          }}
+                          mode="outlined"
+                          style={styles.input}
+                          keyboardType="numeric"
+                          placeholder="50"
+                          right={<TextInput.Affix text="cal" />}
+                        />
+                      </View>
+                    </View>
+                  )}
+
                   {/* Calories calculation */}
-                  {calculateCaloriesPer100g() > 0 && (
+                  {getCaloriesPer100g() > 0 && (
                     <View style={styles.calculationCard}>
                       <Text style={styles.calculationTitle}>
                         {itemName.toLowerCase().includes('bread') || category === 'Bread' ? 'Calories per slice:' : 'Calories per 100g:'}
                       </Text>
                       <Text style={styles.calculationValue}>{getDisplayCalories()}</Text>
+                      {inputMethod === 'specific' && (
+                        <Text style={styles.calculationNote}>
+                          Calculated: {specificQuantity}g = {specificCalories} cal → {getCaloriesPer100g()} cal/100g
+                        </Text>
+                      )}
                     </View>
                   )}
                 </View>
@@ -563,7 +671,7 @@ const AddMealItemScreen = () => {
                       <Text style={styles.previewTitle}>{itemName}</Text>
                       <Text style={styles.previewCategory}>Category: {category}</Text>
                       <Text style={styles.previewDetails}>
-                        {quantityGrams}g = {calories} calories ({getDisplayCalories()})
+                        {getDisplayCalories()}
                       </Text>
                     </View>
                   </View>
@@ -580,7 +688,7 @@ const AddMealItemScreen = () => {
           mode="contained"
           onPress={saveMealItem}
           loading={loading}
-          disabled={!category || !itemName.trim() || !quantityGrams || !calories}
+          disabled={!category || !itemName.trim() || (inputMethod === 'per100g' ? !caloriesPer100g : (!exactQuantity || !exactCalories))}
           style={styles.saveButton}
           contentStyle={styles.buttonContent}
           labelStyle={styles.buttonLabel}
@@ -743,6 +851,23 @@ const styles = StyleSheet.create({
   },
   selectedListItem: {
     backgroundColor: COLORS.lightPrimary,
+  },
+  inputMethodContainer: {
+    marginBottom: 16,
+  },
+  inputMethodLabel: {
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  inputMethodButtons: {
+    marginBottom: 8,
+  },
+  calculationNote: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
 

@@ -1,10 +1,10 @@
 import pool from '../config/database';
-import { 
-  ExerciseActivity, 
-  ExerciseSummary, 
-  CreateExerciseRequest, 
-  UpdateExerciseRequest, 
-  GetExerciseHistoryRequest 
+import {
+  ExerciseActivity,
+  ExerciseSummary,
+  CreateExerciseRequest,
+  UpdateExerciseRequest,
+  GetExerciseHistoryRequest
 } from '../types/exercise.types';
 import { getCurrentDate, isValidDate } from '../utils/timeUtils';
 
@@ -53,16 +53,16 @@ export class ExerciseModel {
   // Get daily exercise summary for a specific date
   static async getDailyExerciseSummary(userId: number, date: string): Promise<ExerciseSummary> {
     const query = `
-      SELECT 
+      SELECT
         COUNT(*) as total_activities,
         COALESCE(SUM(duration_seconds), 0) as total_duration_seconds,
         COALESCE(SUM(calories_burned), 0) as total_calories_burned
-      FROM exercise_activities 
+      FROM exercise_activities
       WHERE user_id = $1 AND activity_date = $2
     `;
 
     const activitiesQuery = `
-      SELECT * FROM exercise_activities 
+      SELECT * FROM exercise_activities
       WHERE user_id = $1 AND activity_date = $2
       ORDER BY created_at DESC
     `;
@@ -76,7 +76,7 @@ export class ExerciseModel {
       const summary = summaryResult.rows[0];
       const totalActivities = parseInt(summary.total_activities);
       const totalCaloriesBurned = parseInt(summary.total_calories_burned);
-      
+
       return {
         totalActivities,
         totalDuration: parseInt(summary.total_duration_seconds),
@@ -96,7 +96,7 @@ export class ExerciseModel {
       SELECT id, user_id, activity_type, duration_seconds, calories_burned, notes,
              TO_CHAR(activity_date, 'YYYY-MM-DD') as activity_date,
              created_at, updated_at
-      FROM exercise_activities 
+      FROM exercise_activities
       WHERE user_id = $1
     `;
 
@@ -135,7 +135,7 @@ export class ExerciseModel {
     const { activity_type, duration_seconds, calories_burned, notes } = data;
 
     let query = `
-      UPDATE exercise_activities 
+      UPDATE exercise_activities
       SET updated_at = CURRENT_TIMESTAMP
     `;
 
@@ -186,7 +186,7 @@ export class ExerciseModel {
   // Delete exercise activity
   static async deleteExercise(userId: number, exerciseId: number): Promise<void> {
     const query = `
-      DELETE FROM exercise_activities 
+      DELETE FROM exercise_activities
       WHERE id = $1 AND user_id = $2
     `;
 
@@ -205,7 +205,7 @@ export class ExerciseModel {
   // Delete exercise activities by date and type
   static async deleteExerciseActivitiesByDateAndType(userId: number, activityDate: string, activityType: string): Promise<number> {
     const query = `
-      DELETE FROM exercise_activities 
+      DELETE FROM exercise_activities
       WHERE user_id = $1 AND activity_date = $2 AND activity_type = $3
     `;
 
@@ -221,8 +221,8 @@ export class ExerciseModel {
   // Get available activity types
   static async getActivityTypes(): Promise<string[]> {
     const query = `
-      SELECT DISTINCT activity_type 
-      FROM exercise_activities 
+      SELECT DISTINCT activity_type
+      FROM exercise_activities
       ORDER BY activity_type
     `;
 
@@ -238,16 +238,16 @@ export class ExerciseModel {
   // Get exercise summary for a specific date
   static async getExerciseSummaryByDate(userId: number, date: string): Promise<ExerciseSummary> {
     const query = `
-      SELECT 
+      SELECT
         COUNT(*) as total_activities,
         COALESCE(SUM(duration_seconds), 0) as total_duration_seconds,
         COALESCE(SUM(calories_burned), 0) as total_calories_burned
-      FROM exercise_activities 
+      FROM exercise_activities
       WHERE user_id = $1 AND activity_date = $2
     `;
 
     const activitiesQuery = `
-      SELECT * FROM exercise_activities 
+      SELECT * FROM exercise_activities
       WHERE user_id = $1 AND activity_date = $2
       ORDER BY created_at DESC
     `;
@@ -261,7 +261,7 @@ export class ExerciseModel {
       const summary = summaryResult.rows[0];
       const totalActivities = parseInt(summary.total_activities);
       const totalCaloriesBurned = parseInt(summary.total_calories_burned);
-      
+
       return {
         totalActivities,
         totalDuration: parseInt(summary.total_duration_seconds),

@@ -1,6 +1,8 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from '../constants/config';
+import { API_BASE_URL, STORAGE_KEYS } from '../constants/config';
+import { Alert } from 'react-native';
+import authService from './authService';
 
 export class BaseApiService {
   protected api: AxiosInstance;
@@ -11,6 +13,7 @@ export class BaseApiService {
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
       },
     });
 
@@ -21,7 +24,7 @@ export class BaseApiService {
     // Add request interceptor to include auth token
     this.api.interceptors.request.use(
       async (config) => {
-        const token = await AsyncStorage.getItem('auth_token');
+        const token = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -35,10 +38,41 @@ export class BaseApiService {
     // Add response interceptor for error handling
     this.api.interceptors.response.use(
       (response: AxiosResponse) => response,
-      (error) => {
+      async (error) => {
+        // Handle token expiration
+        if (error.response?.status === 401) {
+          await this.handleTokenExpiration();
+        }
         return Promise.reject(error);
       }
     );
+  }
+
+  // Handle token expiration
+  private async handleTokenExpiration(): Promise<void> {
+    try {
+      // Use AuthService to handle expiration
+      await authService.logout();
+
+      // Show user-friendly message
+      Alert.alert(
+        'Session Expired',
+        'Your session has expired. Please log in again.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigate to login screen
+              // Note: You'll need to implement navigation logic here
+              console.log('Redirecting to login...');
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    } catch (error) {
+      console.error('Error handling token expiration:', error);
+    }
   }
 
   // Generic CRUD methods

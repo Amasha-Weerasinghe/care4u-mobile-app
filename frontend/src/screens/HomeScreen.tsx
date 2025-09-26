@@ -3,20 +3,17 @@ import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   Alert,
   Dimensions,
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
   Text, 
   IconButton, 
   Card, 
-  ProgressBar,
-  Avatar,
-  Chip,
   Button,
   ActivityIndicator
 } from 'react-native-paper';

@@ -25,8 +25,8 @@ export class SugarModel {
 
     // Store the date using explicit DATE casting
     const result = await pool.query(
-      `INSERT INTO sugar_records (user_id, meal_type, blood_sugar_value, record_date) 
-       VALUES ($1, $2, $3, $4::date) 
+      `INSERT INTO sugar_records (user_id, meal_type, blood_sugar_value, record_date)
+       VALUES ($1, $2, $3, $4::date)
        RETURNING id, user_id, meal_type, blood_sugar_value,
                 TO_CHAR(record_date, 'YYYY-MM-DD') as record_date,
                 created_at, updated_at`,
@@ -130,12 +130,12 @@ export class SugarModel {
     }
 
     const result = await pool.query(
-      `UPDATE sugar_records SET 
-        meal_type = $1, 
-        blood_sugar_value = $2, 
+      `UPDATE sugar_records SET
+        meal_type = $1,
+        blood_sugar_value = $2,
         record_date = $3::date,
         updated_at = CURRENT_TIMESTAMP
-        WHERE id = $4 AND user_id = $5 
+        WHERE id = $4 AND user_id = $5
         RETURNING id, user_id, meal_type, blood_sugar_value,
                  TO_CHAR(record_date, 'YYYY-MM-DD') as record_date,
                  created_at, updated_at`,

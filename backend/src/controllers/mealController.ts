@@ -16,7 +16,7 @@ export class MealController {
     try {
       const { search, category } = req.query;
       const foodItems = await MealService.getFoodItems(
-        search as string, 
+        search as string,
         category as string
       );
 
@@ -346,7 +346,7 @@ export class MealController {
       const userId = req.user!.userId;
 
       await MealService.deleteMealTemplate(parseInt(id), userId);
-      
+
       res.json({
         success: true,
         message: 'Meal template deleted successfully'
@@ -392,15 +392,14 @@ export class MealController {
       const { meal_type, meal_date, items } = req.body;
       const userId = req.user!.userId;
 
-
-      // Ensure the date is in the correct format 
+      // Ensure the date is in the correct format
       let normalizedDate = meal_date;
-      
+
       // If the date contains time information, extract only the date part
       if (typeof normalizedDate === 'string' && normalizedDate.includes('T')) {
         normalizedDate = normalizedDate.split('T')[0];
       }
-      
+
       // Validate the date format (YYYY-MM-DD)
       if (!isValidDate(normalizedDate)) {
         return res.status(400).json({
@@ -408,7 +407,7 @@ export class MealController {
           message: 'Invalid date format. Expected YYYY-MM-DD'
         });
       }
-      
+
       const record = await MealService.createMealRecord({
         user_id: userId,
         meal_type,
@@ -468,11 +467,11 @@ export class MealController {
     try {
       const userId = req.user!.userId;
       const summary = await MealService.getTodaySummary(userId);
-      
+
       const todayString = getCurrentDate();
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         summary,
         date: todayString
       });
@@ -497,7 +496,7 @@ export class MealController {
       const userId = req.user!.userId;
 
       const result = await MealService.deleteMealRecord(parseInt(id), userId);
-      
+
       if (result) {
         res.json({
           success: true,
@@ -537,11 +536,11 @@ export class MealController {
       }
 
       const result = await MealService.deleteMealRecordsByDateAndType(
-        userId, 
-        meal_date as string, 
+        userId,
+        meal_date as string,
         meal_type as string
       );
-      
+
       res.json({
         success: true,
         message: `Deleted ${result} meal records`,
@@ -568,14 +567,14 @@ export class MealController {
       const { meal_type, limit = 1 } = req.query;
 
       const recommendations = await MealRecommendationService.getMealRecommendations(
-        userId, 
-        meal_type as string, 
+        userId,
+        meal_type as string,
         parseInt(limit as string)
       );
 
-      res.json({ 
-        success: true, 
-        recommendations 
+      res.json({
+        success: true,
+        recommendations
       });
     } catch (error) {
       console.error('Get meal recommendations error:', error);

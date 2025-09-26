@@ -6,15 +6,15 @@ import path from 'path';
 export const initializeDatabase = async () => {
   try {
     const schemaPath = path.join(__dirname, 'schema.sql');
-    
+
     if (!fs.existsSync(schemaPath)) {
       throw new Error('Schema file not found at: ' + schemaPath);
     }
-    
+
     const schema = fs.readFileSync(schemaPath, 'utf8');
     await pool.query(schema);
     console.log('Database tables initialized successfully');
-    
+
   } catch (error: unknown) {
     console.error('Database initialization error:', error instanceof Error ? error.message : String(error));
     throw error;

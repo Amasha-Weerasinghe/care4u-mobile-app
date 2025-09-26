@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL, API_ENDPOINTS } from '../constants/config';
+import { API_BASE_URL, API_ENDPOINTS, STORAGE_KEYS } from '../constants/config';
 
 export interface SugarRecord {
   id: number;
@@ -51,7 +51,7 @@ class SugarService {
     // Add request interceptor to include auth token
     this.api.interceptors.request.use(
       async (config) => {
-        const token = await AsyncStorage.getItem('auth_token');
+        const token = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -67,9 +67,8 @@ class SugarService {
       (response: AxiosResponse) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Handle unauthorized access
-          AsyncStorage.removeItem('auth_token');
-          AsyncStorage.removeItem('user_data');
+          AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+          AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
         }
         return Promise.reject(error);
       }

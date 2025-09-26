@@ -21,9 +21,9 @@ export class AppointmentController {
         location: req.body.location,
         notes: req.body.notes
       };
-      
+
       const appointment = await AppointmentService.createAppointment(appointmentData);
-      
+
       res.status(201).json({
         success: true,
         message: 'Appointment created successfully',
@@ -48,7 +48,7 @@ export class AppointmentController {
     try {
       const userId = req.user!.userId;
       const appointments = await AppointmentService.getUserAppointments(userId);
-      
+
       res.status(200).json({
         success: true,
         appointments
@@ -87,7 +87,7 @@ export class AppointmentController {
       }
 
       const appointment = await AppointmentService.getAppointmentById(appointmentId, userId);
-      
+
       if (!appointment) {
         return res.status(404).json({
           success: false,
@@ -135,7 +135,7 @@ export class AppointmentController {
       };
 
       const appointment = await AppointmentService.updateAppointment(appointmentId, userId, updates);
-      
+
       if (!appointment) {
         return res.status(404).json({
           success: false,
@@ -176,7 +176,7 @@ export class AppointmentController {
       }
 
       const deleted = await AppointmentService.deleteAppointment(appointmentId, userId);
-      
+
       if (!deleted) {
         return res.status(404).json({
           success: false,
@@ -216,7 +216,7 @@ export class AppointmentController {
       }
 
       const appointments = await AppointmentService.getAppointmentsByDate(userId, date);
-      
+
       res.status(200).json({
         success: true,
         appointments
@@ -242,7 +242,7 @@ export class AppointmentController {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
 
       const appointments = await AppointmentService.getUpcomingAppointments(userId, limit);
-      
+
       res.status(200).json({
         success: true,
         appointments
@@ -268,7 +268,7 @@ export class AppointmentController {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
 
       const appointments = await AppointmentService.getPastAppointments(userId, limit);
-      
+
       res.status(200).json({
         success: true,
         appointments

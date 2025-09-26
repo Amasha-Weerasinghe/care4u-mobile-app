@@ -43,7 +43,7 @@ export class SugarService {
       throw new Error('Blood sugar value must be between 1 and 1000 mg/dL');
     }
 
-    // Check if another record exists for this meal type and date 
+    // Check if another record exists for this meal type and date
     const existingRecord = await SugarModel.getSugarRecords(userId, data.record_date, data.meal_type);
     const conflictingRecord = existingRecord.find(record => record.id !== id);
     if (conflictingRecord) {
