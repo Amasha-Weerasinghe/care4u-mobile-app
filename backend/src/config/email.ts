@@ -5,15 +5,51 @@ import path from 'path';
 const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env';
 dotenv.config({ path: path.join(__dirname, '../../', envFile) });
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD
-  }
-});
+// Create transporter with production-optimized settings
+const createTransporter = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  const baseConfig = {
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD
+    }
+  };
 
-export const sendOTPEmail = async (email: string, otp: string) => {
+  if (isProduction) {
+    return nodemailer.createTransport({
+      ...baseConfig,
+      // Production settings with better timeout handling
+      connectionTimeout: 60000, // 60 seconds
+      greetingTimeout: 30000,   // 30 seconds
+      socketTimeout: 60000,     // 60 seconds
+      // Connection pooling for better performance
+      pool: true,
+      maxConnections: 3, // Reduced for production stability
+      maxMessages: 50,
+      rateDelta: 30000, // 30 seconds
+      rateLimit: 3, // max 3 emails per rateDelta
+      // Additional production settings
+      secure: true,
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+  } else {
+    return nodemailer.createTransport({
+      ...baseConfig,
+      // Development settings
+      connectionTimeout: 30000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000
+    });
+  }
+};
+
+const transporter = createTransporter();
+
+export const sendOTPEmail = async (email: string, otp: string, retryCount = 0): Promise<boolean> => {
   const mailOptions = {
     from: process.env.FROM_EMAIL,
     to: email,
@@ -36,11 +72,31 @@ export const sendOTPEmail = async (email: string, otp: string) => {
   };
 
   try {
+    // Verify connection before sending
+    await transporter.verify();
+    
     const info = await transporter.sendMail(mailOptions);
-
+    console.log('Email sent successfully:', info.messageId);
     return true;
-  } catch (error) {
-    console.error('Error sending email: ', error);
+  } catch (error: any) {
+    console.error('Error sending email (attempt', retryCount + 1, '):', error);
+    
+    // Retry logic for connection timeouts
+    if (error.code === 'ETIMEDOUT' && retryCount < 2) {
+      console.log('Retrying email send in 5 seconds...');
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      return sendOTPEmail(email, otp, retryCount + 1);
+    }
+    
+    // Log specific error details
+    if (error.code === 'ETIMEDOUT') {
+      console.error('Email connection timeout after 3 attempts');
+    } else if (error.code === 'EAUTH') {
+      console.error('Email authentication failed - check Gmail credentials');
+    } else {
+      console.error('Email sending failed:', error.message);
+    }
+    
     return false;
   }
 };

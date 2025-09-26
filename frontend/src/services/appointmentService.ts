@@ -53,17 +53,35 @@ class AppointmentService extends BaseApiService {
     return this.post(API_ENDPOINTS.APPOINTMENTS, appointmentData);
   }
 
-  // Get all appointments for the user
+  // Get all appointments for the user with retry logic
   async getAppointments(): Promise<GetAppointmentsResponse> {
-    try {
-      return await this.get(API_ENDPOINTS.APPOINTMENTS);
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-        await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
+    const maxRetries = 3;
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        return await this.get(API_ENDPOINTS.APPOINTMENTS);
+      } catch (error: any) {
+        retryCount++;
+        console.error(`Error loading appointments (attempt ${retryCount}/${maxRetries}):`, error);
+        
+        if (error.response?.status === 401) {
+          await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+          await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
+          throw error;
+        }
+        
+        if (retryCount === maxRetries) {
+          console.error('Failed to load appointments after all retries');
+          throw error;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
       }
-      throw error;
     }
+    
+    throw new Error('Failed to load appointments');
   }
 
   // Get appointment by ID
@@ -86,30 +104,66 @@ class AppointmentService extends BaseApiService {
     return this.get(API_ENDPOINTS.APPOINTMENTS_BY_DATE.replace(':date', date));
   }
 
-  // Get upcoming appointments
+  // Get upcoming appointments with retry logic
   async getUpcomingAppointments(limit: number = 10): Promise<GetAppointmentsResponse> {
-    try {
-      return await this.get(`${API_ENDPOINTS.APPOINTMENTS_UPCOMING}?limit=${limit}`);
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-        await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
+    const maxRetries = 3;
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        return await this.get(`${API_ENDPOINTS.APPOINTMENTS_UPCOMING}?limit=${limit}`);
+      } catch (error: any) {
+        retryCount++;
+        console.error(`Error loading upcoming appointments (attempt ${retryCount}/${maxRetries}):`, error);
+        
+        if (error.response?.status === 401) {
+          await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+          await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
+          throw error;
+        }
+        
+        if (retryCount === maxRetries) {
+          console.error('Failed to load upcoming appointments after all retries');
+          throw error;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
       }
-      throw error;
     }
+    
+    throw new Error('Failed to load upcoming appointments');
   }
 
-  // Get past appointments
+  // Get past appointments with retry logic
   async getPastAppointments(limit: number = 10): Promise<GetAppointmentsResponse> {
-    try {
-      return await this.get(`${API_ENDPOINTS.APPOINTMENTS_PAST}?limit=${limit}`);
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-        await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
+    const maxRetries = 3;
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        return await this.get(`${API_ENDPOINTS.APPOINTMENTS_PAST}?limit=${limit}`);
+      } catch (error: any) {
+        retryCount++;
+        console.error(`Error loading past appointments (attempt ${retryCount}/${maxRetries}):`, error);
+        
+        if (error.response?.status === 401) {
+          await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+          await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
+          throw error;
+        }
+        
+        if (retryCount === maxRetries) {
+          console.error('Failed to load past appointments after all retries');
+          throw error;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
       }
-      throw error;
     }
+    
+    throw new Error('Failed to load past appointments');
   }
 }
 

@@ -52,9 +52,19 @@ export const AppointmentProvider: React.FC<AppointmentProviderProps> = ({ childr
       
       const response = await appointmentService.getAppointments();
       setAppointments(response.appointments);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load appointments');
+    } catch (err: any) {
       console.error('Error loading appointments:', err);
+      
+      // Handle specific error cases
+      if (err.response?.status === 404) {
+        console.log('Appointments endpoint not found, initializing with empty array');
+        setAppointments([]);
+        setError(null); // Don't show error for 404, just use empty array
+      } else if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load appointments');
+      }
     } finally {
       setLoading(false);
     }
