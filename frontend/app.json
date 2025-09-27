@@ -19,8 +19,7 @@
       "adaptiveIcon": {
         "backgroundColor": "#1875C3"
       },
-      "package": "com.care4u.app",
-      "versionCode": 1
+      "package": "com.care4u.app"
     },
     "sdkVersion": "54.0.0",
     "extra": {

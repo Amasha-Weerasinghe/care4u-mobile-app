@@ -25,9 +25,11 @@ const AddMealItemScreen = () => {
   const [category, setCategory] = useState<string>('');
   const [itemName, setItemName] = useState('');
   const [caloriesPer100g, setCaloriesPer100g] = useState('');
-  const [inputMethod, setInputMethod] = useState<'per100g' | 'exact'>('per100g');
+  const [inputMethod, setInputMethod] = useState<'per100g' | 'exact' | 'specific'>('per100g');
   const [exactQuantity, setExactQuantity] = useState('');
   const [exactCalories, setExactCalories] = useState('');
+  const [specificQuantity, setSpecificQuantity] = useState('');
+  const [specificCalories, setSpecificCalories] = useState('');
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
@@ -414,7 +416,6 @@ const AddMealItemScreen = () => {
                   keyboardType="numeric"
                   placeholder="165"
                   right={<TextInput.Affix text="cal/100g" />}
-                  helperText="Enter the calorie content per 100 grams of this food item"
                 />
               ) : (
                 <View style={styles.row}>
@@ -431,7 +432,6 @@ const AddMealItemScreen = () => {
                       keyboardType="numeric"
                       placeholder={itemName.toLowerCase().includes('bread') || category === 'Bread' ? "25" : "60"}
                       right={<TextInput.Affix text="g" />}
-                      helperText={itemName.toLowerCase().includes('bread') || category === 'Bread' ? "Weight of one slice (typically 25g)" : "Amount you actually ate"}
                     />
                   </View>
                   <View style={styles.halfWidth}>
@@ -447,7 +447,6 @@ const AddMealItemScreen = () => {
                       keyboardType="numeric"
                       placeholder={itemName.toLowerCase().includes('bread') || category === 'Bread' ? "70" : "5"}
                       right={<TextInput.Affix text="cal" />}
-                      helperText={itemName.toLowerCase().includes('bread') || category === 'Bread' ? "Calories in one slice" : "Calories in this exact portion"}
                     />
                   </View>
                 </View>
@@ -608,7 +607,6 @@ const AddMealItemScreen = () => {
                       keyboardType="numeric"
                       placeholder="165"
                       right={<TextInput.Affix text="cal/100g" />}
-                      helperText="Enter the calorie content per 100 grams of this food item"
                     />
                   ) : (
                     <View style={styles.row}>
